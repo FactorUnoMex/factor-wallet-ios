@@ -1,0 +1,8 @@
+{
+    "extension_name": {
+        "message": "FactorWallet"
+    },
+    "extension_description": {
+        "message": "Launch FactorWallet when you tap on EIP681 links"
+    }
+}

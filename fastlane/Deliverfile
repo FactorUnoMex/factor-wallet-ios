@@ -1,0 +1,19 @@
+###################### More Options ######################
+# If you want to have even more control, check out the documentation
+# https://github.com/fastlane/fastlane/blob/master/deliver/Deliverfile.md
+
+
+###################### Automatically generated ######################
+# Feel free to remove the following line if you use fastlane (which you should)
+
+team_id "118986049"
+
+force true
+
+skip_screenshots true
+
+skip_metadata true
+
+submit_for_review false
+
+run_precheck_before_submit false
