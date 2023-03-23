@@ -20,8 +20,8 @@ extension SendTransactionNotRetryableError: LocalizedError {
             return message
         case .executionReverted(let message):
             return message
-        case .unknown:
-            return R.string.localizable.unknownError()
+        case .unknown(_, let message):
+            return message
         }
     }
 }
@@ -90,7 +90,7 @@ extension SendTransactionNotRetryableError {
     var faqEntry: (url: URL, title: String)? {
         switch self.type {
         case .insufficientFunds:
-            return (url: URL(string: "https://factor-wallet.net/faq/what-do-insufficient-funds-for-gas-price-mean/")!, title: R.string.localizable.tokenTransactionConfirmationErrorLinkTitleInsufficientFundsError())
+            return (url: URL(string: "https://alphawallet.com/faq/what-do-insufficient-funds-for-gas-price-mean/")!, title: R.string.localizable.tokenTransactionConfirmationErrorLinkTitleInsufficientFundsError())
         case .nonceTooLow:
             //TODO fill in FAQ URL
             //return (url: URL(string: "")!, title: R.string.localizable.tokenTransactionConfirmationErrorLinkTitleNonceTooLowError())

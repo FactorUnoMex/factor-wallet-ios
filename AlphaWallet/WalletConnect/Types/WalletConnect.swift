@@ -25,6 +25,15 @@ extension AlphaWallet.WalletConnect.Session {
             }
         }
 
+        var source: Analytics.SignMessageRequestSource {
+            switch self {
+            case .v1:
+                return .walletConnect(.v1)
+            case .v2:
+                return .walletConnect(.v2)
+            }
+        }
+
         var method: String {
             switch self {
             case .v1(let request, _):
@@ -156,7 +165,7 @@ extension AlphaWallet.WalletConnect {
 
         var servers: [RPCServer] {
             let chains = Array(namespaces.values.flatMap { $0.accounts.map { $0.blockchain.absoluteString } })
-            return chains.compactMap { eip155URLCoder.decodeRPC(from: $0) }
+            return chains.compactMap { Eip155UrlCoder.decodeRpc(from: $0) }
         }
 
         var accounts: [AlphaWallet.Address] {

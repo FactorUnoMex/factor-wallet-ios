@@ -10,7 +10,6 @@ public struct Constants {
     static let legacyMagicLinkHost = "app.awallet.io"
     static let classicMagicLinkHost = "classic.aw.app"
     static let callistoMagicLinkHost = "callisto.aw.app"
-    static let poaMagicLinkHost = "poa.aw.app"
     static let xDaiMagicLinkHost = "xdai.aw.app"
     static let goerliMagicLinkHost = "goerli.aw.app"
     static let artisSigma1MagicLinkHost = "artis_sigma1.aw.app"
@@ -38,6 +37,8 @@ public struct Constants {
     static let ioTeXTestnetMagicLinkHost = "ioTeXTestnet.aw.app"
     static let optimismGoerliMagicLinkHost = "optimismGoerli.aw.app"
     static let arbitrumGoerliMagicLinkHost = "arbitrumGoerli.aw.app"
+    static let okxMagicLinkHost = "okx.aw.app"
+    static let sepoliaMagicLinkHost = "sepolia.aw.app"
 
     // Magic link networks
     public static let legacyMagicLinkPrefix = "https://app.awallet.io/"
@@ -72,7 +73,7 @@ public struct Constants {
 
     static func buyWithRampUrl(asset: String, wallet: Wallet) -> String? {
         guard Constants.Credentials.rampApiKey.nonEmpty else { return nil }
-        return "https://buy.ramp.network/?hostApiKey=\(Constants.Credentials.rampApiKey)&hostLogoUrl=https%3A%2F%2Ffactor-wallet.net%2Flogo.svg&hostAppName=FactorWallet&swapAsset=\(asset)&userAddress=\(wallet.address.eip55String)"
+        return "https://buy.ramp.network/?hostApiKey=\(Constants.Credentials.rampApiKey)&hostLogoUrl=https%3A%2F%2Falphawallet.com%2Fwp-content%2Fthemes%2Falphawallet%2Fimg%2Flogo-horizontal-new.svg&hostAppName=AlphaWallet&swapAsset=\(asset)&userAddress=\(wallet.address.eip55String)"
     }
 
     static func buyWithCoinbaseUrl(blockchain: String, wallet: Wallet) -> String? {
@@ -95,8 +96,8 @@ public struct Constants {
 
     static let ensContractOnMainnet = AlphaWallet.Address.ethereumAddress(eip55String: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85")
 
-    public static let defaultEnabledServers: [RPCServer] = [.binance_smart_chain, .main, .polygon]
-    public static let defaultEnabledTestnetServers: [RPCServer] = [.binance_smart_chain_testnet]
+    public static let defaultEnabledServers: [RPCServer] = [.main, .xDai, .polygon]
+    public static let defaultEnabledTestnetServers: [RPCServer] = [.goerli]
 
     enum TokenScript {
         static let urlSchemeForResources = "tokenscript-resource:///"
@@ -147,10 +148,6 @@ public struct Constants {
 
     enum Image {
         static let numberOfCharactersOfSymbolToShowInIcon = 4
-    }
-
-    enum Phi {
-        static let baseUrl = URL(string: "https://price.phi.network")!
     }
 
     //CurrencyFormatter

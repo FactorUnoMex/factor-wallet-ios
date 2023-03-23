@@ -61,12 +61,12 @@ class ReplaceTransactionCoordinator: Coordinator {
             return 0
         }
     }
-    private var transactionData: Data? {
+    private var transactionData: Data {
         switch mode {
         case .speedup:
             return pendingTransactionInformation.data
         case .cancel:
-            return nil
+            return Data()
         }
     }
     private var transactionConfirmationConfiguration: TransactionType.Configuration {
@@ -149,7 +149,7 @@ extension ReplaceTransactionCoordinator: TransactionConfirmationCoordinatorDeleg
     func coordinator(_ coordinator: TransactionConfirmationCoordinator, didFailTransaction error: Error) {
         UIApplication.shared
             .presentedViewController(or: presentingViewController)
-            .displayError(message: error.prettyError)
+            .displayError(message: error.localizedDescription)
     }
 
     func didSendTransaction(_ transaction: SentTransaction, inCoordinator coordinator: TransactionConfirmationCoordinator) {

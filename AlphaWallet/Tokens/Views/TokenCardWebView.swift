@@ -8,30 +8,38 @@
 import Foundation
 import UIKit
 import AlphaWalletFoundation
+import Combine
+import AlphaWalletCore
 
-class TokenCardWebView: UIView, TokenCardRowViewConfigurable, ViewRoundingSupportable, ViewLoadingCancelable {
-    private let analytics: AnalyticsLogger
+class TokenCardWebView: UIView, TokenCardRowViewConfigurable, ViewRoundingSupportable, ViewLoadingSupportable {
     private let server: RPCServer
     private let assetDefinitionStore: AssetDefinitionStore
     private var lastTokenHolder: TokenHolder?
     private var tokenView: TokenView
-    private let keystore: Keystore
     private let wallet: Wallet
     private lazy var tokenScriptRendererView: TokenInstanceWebView = {
-        let webView = TokenInstanceWebView(analytics: analytics, server: server, wallet: wallet, assetDefinitionStore: assetDefinitionStore, keystore: keystore)
+        let webView = TokenInstanceWebView(
+            server: server,
+            wallet: wallet,
+            assetDefinitionStore: assetDefinitionStore)
+        
         webView.delegate = self
         return webView
     }()
 
     var rounding: ViewRounding = .none
+    var loading: ViewLoading = .disabled
+    
     var isStandalone: Bool {
         get { return tokenScriptRendererView.isStandalone }
         set { tokenScriptRendererView.isStandalone = newValue }
     }
 
-    init(analytics: AnalyticsLogger, server: RPCServer, tokenView: TokenView, assetDefinitionStore: AssetDefinitionStore, keystore: Keystore, wallet: Wallet) {
-        self.keystore = keystore
-        self.analytics = analytics
+    init(server: RPCServer,
+         tokenView: TokenView,
+         assetDefinitionStore: AssetDefinitionStore,
+         wallet: Wallet) {
+
         self.server = server
         self.tokenView = tokenView
         self.assetDefinitionStore = assetDefinitionStore
@@ -52,7 +60,11 @@ class TokenCardWebView: UIView, TokenCardRowViewConfigurable, ViewRoundingSuppor
 
     func configure(tokenHolder: TokenHolder, tokenId: TokenId) {
         lastTokenHolder = tokenHolder
-        configure(viewModel: TokenCardWebViewModel(tokenHolder: tokenHolder, tokenId: tokenId, tokenView: tokenView, assetDefinitionStore: assetDefinitionStore))
+        configure(viewModel: TokenCardWebViewModel(
+            tokenHolder: tokenHolder,
+            tokenId: tokenId,
+            tokenView: tokenView,
+            assetDefinitionStore: assetDefinitionStore))
     }
 
     private func configure(viewModel: TokenCardWebViewModel) {
@@ -72,8 +84,13 @@ class TokenCardWebView: UIView, TokenCardRowViewConfigurable, ViewRoundingSuppor
 }
 
 extension TokenCardWebView: TokenInstanceWebViewDelegate {
-    func navigationControllerFor(tokenInstanceWebView: TokenInstanceWebView) -> UINavigationController? {
-        return nil
+
+    func requestSignMessage(message: SignMessageType,
+                            server: RPCServer,
+                            account: AlphaWallet.Address,
+                            source: Analytics.SignMessageRequestSource,
+                            requester: RequesterViewModel?) -> AnyPublisher<Data, PromiseError> {
+        return .empty()
     }
 
     func shouldClose(tokenInstanceWebView: TokenInstanceWebView) {
@@ -84,7 +101,12 @@ extension TokenCardWebView: TokenInstanceWebViewDelegate {
         //Refresh if view, but not item-view
         if isStandalone {
             guard let lastTokenHolder = lastTokenHolder else { return }
-            configure(viewModel: TokenCardWebViewModel(tokenHolder: lastTokenHolder, tokenId: lastTokenHolder.tokenId, tokenView: tokenView, assetDefinitionStore: assetDefinitionStore))
+
+            configure(viewModel: TokenCardWebViewModel(
+                tokenHolder: lastTokenHolder,
+                tokenId: lastTokenHolder.tokenId,
+                tokenView: tokenView,
+                assetDefinitionStore: assetDefinitionStore))
         } else {
             //no-op for item-views
         }

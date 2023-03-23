@@ -9,7 +9,7 @@ import Foundation
 import AlphaWalletWeb3
 import BigInt
 
-class Erc721GetBalancesMethodCall: ContractMethodCall {
+struct Erc721GetBalancesMethodCall: ContractMethodCall {
     typealias Response = [String]
 
     private let function = GetERC721ForTicketsBalance()
@@ -25,11 +25,7 @@ class Erc721GetBalancesMethodCall: ContractMethodCall {
         self.contract = contract
     }
 
-    func response(from resultObject: Any) throws -> [String] {
-        guard let dictionary = resultObject as? [String: AnyObject] else {
-            throw CastError(actualValue: resultObject, expectedType: [String: AnyObject].self)
-        }
-
+    func response(from dictionary: [String: Any]) throws -> [String] {
         return Erc721GetBalancesMethodCall.adapt(dictionary["0"])
     }
 

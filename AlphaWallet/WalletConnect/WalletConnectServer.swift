@@ -9,46 +9,52 @@ import Foundation
 import Combine
 import AlphaWalletFoundation
 import PromiseKit
+import AlphaWalletCore
 
-enum WalletConnectError: Error, LocalizedError {
+enum WalletConnectError: LocalizedError {
     case onlyForWatchWallet(address: AlphaWallet.Address)
     case walletsNotFound(addresses: [AlphaWallet.Address])
     case callbackIdMissing
     case connectionFailure(WalletConnectV1URL)
-    case `internal`(Error)
+    case cancelled
+    case delayedOperation
+    case `internal`(JsonRpcError)
 
-    init(error: Error) {
-        if let value = error as? WalletConnectError {
-            self = value
-        } else {
+    init(error: PromiseError) {
+        if let e = error.embedded as? JsonRpcError, e == .requestRejected {
+            self = .cancelled
+        } else if case PMKError.cancelled = error.embedded {
+            self = .cancelled
+        } else if let error = error.embedded as? JsonRpcError {
             self = .internal(error)
+        } else if let error = error.embedded as? WalletConnectError {
+            self = error
+        } else {
+            self = .internal(.init(code: -32051, message: error.embedded.localizedDescription))
         }
     }
 
-    var isCancellationError: Bool {
+    var asJsonRpcError: JsonRpcError {
         switch self {
         case .internal(let error):
-            if case DAppError.cancelled = error {
-                return true
-            } else if case PMKError.cancelled = error {
-                return true
-            }
-            return false
-        case .walletsNotFound, .onlyForWatchWallet, .callbackIdMissing, .connectionFailure:
-            return false
+            return error
+        case .delayedOperation, .cancelled, .walletsNotFound, .onlyForWatchWallet, .callbackIdMissing, .connectionFailure:
+            return .requestRejected
         }
     }
 
-    var localizedDescription: String {
+    var errorDescription: String? {
         switch self {
         case .internal(let error):
-            return error.localizedDescription
+            return error.message
         case .callbackIdMissing, .connectionFailure:
             return R.string.localizable.walletConnectFailureTitle()
         case .onlyForWatchWallet:
             return R.string.localizable.walletConnectFailureMustNotBeWatchedWallet()
         case .walletsNotFound:
             return R.string.localizable.walletConnectFailureWalletsNotFound()
+        case .delayedOperation, .cancelled:
+            return nil
         }
     }
 }
@@ -70,9 +76,21 @@ protocol WalletConnectServer: WalletConnectResponder {
 }
 
 protocol WalletConnectServerDelegate: AnyObject {
-    func server(_ server: WalletConnectServer, didConnect session: AlphaWallet.WalletConnect.Session)
-    func server(_ server: WalletConnectServer, shouldConnectFor proposal: AlphaWallet.WalletConnect.Proposal, completion: @escaping (AlphaWallet.WalletConnect.ProposalResponse) -> Void)
-    func server(_ server: WalletConnectServer, action: AlphaWallet.WalletConnect.Action, request: AlphaWallet.WalletConnect.Session.Request, session: AlphaWallet.WalletConnect.Session)
-    func server(_ server: WalletConnectServer, didFail error: Error)
-    func server(_ server: WalletConnectServer, tookTooLongToConnectToUrl url: AlphaWallet.WalletConnect.ConnectionUrl)
+    
+    func server(_ server: WalletConnectServer,
+                didConnect session: AlphaWallet.WalletConnect.Session)
+
+    func server(_ server: WalletConnectServer,
+                shouldConnectFor proposal: AlphaWallet.WalletConnect.Proposal) -> AnyPublisher<AlphaWallet.WalletConnect.ProposalResponse, Never>
+
+    func server(_ server: WalletConnectServer,
+                action: AlphaWallet.WalletConnect.Action,
+                request: AlphaWallet.WalletConnect.Session.Request,
+                session: AlphaWallet.WalletConnect.Session)
+
+    func server(_ server: WalletConnectServer,
+                didFail error: Error)
+
+    func server(_ server: WalletConnectServer,
+                tookTooLongToConnectToUrl url: AlphaWallet.WalletConnect.ConnectionUrl)
 }

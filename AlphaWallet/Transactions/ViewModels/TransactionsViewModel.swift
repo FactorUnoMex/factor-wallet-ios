@@ -12,32 +12,20 @@ struct TransactionsViewModelInput {
 
 struct TransactionsViewModelOutput {
     let viewState: AnyPublisher<TransactionsViewModel.ViewState, Never>
-    let pullToRefreshState: AnyPublisher<TokensViewModel.RefreshControlState, Never>
+    let pullToRefreshState: AnyPublisher<Loadable<Void, Error>, Never>
 }
 
 class TransactionsViewModel {
     private let transactionsService: TransactionsService
-    private let sessions: ServerDictionary<WalletSession>
+    private let sessionsProvider: SessionsProvider
 
-    init(transactionsService: TransactionsService, sessions: ServerDictionary<WalletSession>) {
+    init(transactionsService: TransactionsService, sessionsProvider: SessionsProvider) {
         self.transactionsService = transactionsService
-        self.sessions = sessions
+        self.sessionsProvider = sessionsProvider
     }
 
     func transform(input: TransactionsViewModelInput) -> TransactionsViewModelOutput {
-        let beginLoading = input.pullToRefresh.map { _ in TokensViewModel.PullToRefreshState.beginLoading }
-        let loadingHasEnded = beginLoading.delay(for: .seconds(2), scheduler: RunLoop.main)
-            .map { _ in TokensViewModel.PullToRefreshState.endLoading }
-
-        let fakePullToRefreshState = Just<TokensViewModel.PullToRefreshState>(TokensViewModel.PullToRefreshState.idle)
-            .merge(with: beginLoading, loadingHasEnded)
-            .compactMap { state -> TokensViewModel.RefreshControlState? in
-                switch state {
-                case .idle: return nil
-                case .endLoading: return .endLoading
-                case .beginLoading: return .beginLoading
-                }
-            }.eraseToAnyPublisher()
+        let pullToRefreshState = reloadTransactions(input: input.pullToRefresh)
 
         let snapshot = transactionsService
             .transactionsChangeset
@@ -50,11 +38,23 @@ class TransactionsViewModel {
             .map { TransactionsViewModel.ViewState(snapshot: $0) }
             .eraseToAnyPublisher()
 
-        return .init(viewState: viewState, pullToRefreshState: fakePullToRefreshState)
+        return .init(viewState: viewState, pullToRefreshState: pullToRefreshState)
     }
 
-    func buildCellViewModel(for transactionRow: TransactionRow) -> TransactionRowCellViewModel {
-        let session = sessions[transactionRow.server]
+    private func reloadTransactions(input: AnyPublisher<Void, Never>) -> AnyPublisher<Loadable<Void, Error>, Never> {
+        input.map { _ in Loadable<Void, Error>.loading }
+            .delay(for: .seconds(1), scheduler: RunLoop.main)
+            .handleEvents(receiveOutput: { _ in
+                //TODO: implement reloading transactions, not it realoads only when its updated in db
+            })
+            .map { _ in Loadable<Void, Error>.done(()) }
+            .share()
+            .eraseToAnyPublisher()
+    }
+
+    func buildCellViewModel(for transactionRow: TransactionRow) -> TransactionRowCellViewModel? {
+        guard let session = sessionsProvider.session(for: transactionRow.server) else { return nil }
+
         return .init(transactionRow: transactionRow, blockNumberProvider: session.blockNumberProvider, wallet: session.account)
     }
 }

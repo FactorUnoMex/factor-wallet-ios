@@ -80,7 +80,7 @@ final class WalletConnectV2Provider: WalletConnectServer {
                 try? disconnect(each.topicOrUrl)
             } else {
                 let filteredAccounts = accounts.filter {
-                    guard let server = eip155URLCoder.decodeRPC(from: $0.blockchain.absoluteString) else { return false }
+                    guard let server = Eip155UrlCoder.decodeRpc(from: $0.blockchain.absoluteString) else { return false }
                     return each.servers.contains(server)
                 }
 
@@ -146,7 +146,7 @@ final class WalletConnectV2Provider: WalletConnectServer {
         })
     }
 
-    private func reject(request: WalletConnectSwiftV2.Request, error: AlphaWallet.WalletConnect.ResponseError) {
+    private func reject(request: WalletConnectSwiftV2.Request, error: JsonRpcError) {
         infoLog("[WalletConnect2] WC: Did reject session proposal: \(request) with error: \(error.message)")
 
         client.respond(topic: request.topic, requestId: request.id, response: .error(.init(code: error.code, message: error.message)))
@@ -165,16 +165,17 @@ final class WalletConnectV2Provider: WalletConnectServer {
             return reject(request: request, error: .requestRejected)
         }
 
-        let requestV2: AlphaWallet.WalletConnect.Session.Request = .v2(request: request)
-        decoder.decode(request: requestV2)
-            .map { AlphaWallet.WalletConnect.Action(type: $0) }
-            .done { action in
-                self.delegate?.server(self, action: action, request: requestV2, session: .init(multiServerSession: session))
-            }.catch { error in
-                self.delegate?.server(self, didFail: error)
-                //NOTE: we need to reject request if there is some arrays
-                self.reject(request: request, error: .requestRejected)
-            }
+        do {
+            let request: AlphaWallet.WalletConnect.Session.Request = .v2(request: request)
+            let action = AlphaWallet.WalletConnect.Action(type: try decoder.decode(request: request))
+            self.delegate?.server(self, action: action, request: request, session: .init(multiServerSession: session))
+        } catch let error as JsonRpcError {
+            self.delegate?.server(self, didFail: error)
+            //NOTE: we need to reject request if there is some arrays
+            self.reject(request: request, error: error)
+        } catch {
+            //no-op
+        }
     }
 
     private func didDelete(topic: String, reason: WalletConnectSwiftV2.Reason) {
@@ -199,26 +200,24 @@ final class WalletConnectV2Provider: WalletConnectServer {
     private func _didReceive(proposal: WalletConnectSwiftV2.Session.Proposal, completion: @escaping () -> Void) {
         infoLog("[WalletConnect2] WC: Did receive session proposal")
 
-        func reject(proposal: WalletConnectSwiftV2.Session.Proposal) {
-            infoLog("[WalletConnect2] WC: Did reject session proposal: \(proposal)")
-            client.reject(proposalId: proposal.id, reason: .userRejectedChains)
+        func reject(proposal: WalletConnectSwiftV2.Session.Proposal, reason: RejectionReason) {
+            infoLog("[WalletConnect2] WC: Did reject session proposal: \(proposal), reason: \(reason)")
+            client.reject(proposalId: proposal.id, reason: reason)
             completion()
         }
 
-        guard let delegate = delegate else {
-            reject(proposal: proposal)
+        guard let delegate = delegate, let newProposal = AlphaWallet.WalletConnect.Proposal(proposal: proposal) else {
+            reject(proposal: proposal, reason: .userRejectedChains)
             return
         }
 
-        do {
-            try WalletConnectV2Provider.validateProposalForMixedMainnetOrTestnet(proposal)
-
-            delegate.server(self, shouldConnectFor: .init(proposal: proposal)) { [weak self, caip10AccountProvidable] response in
+        delegate.server(self, shouldConnectFor: newProposal)
+            .sink { [weak self, caip10AccountProvidable] response in
                 guard let strongSelf = self else { return }
 
                 guard response.shouldProceed else {
                     strongSelf.currentProposal = .none
-                    reject(proposal: proposal)
+                    reject(proposal: proposal, reason: .userRejected)
                     return
                 }
 
@@ -231,47 +230,26 @@ final class WalletConnectV2Provider: WalletConnectServer {
                 } catch {
                     delegate.server(strongSelf, didFail: error)
                     //NOTE: for now we dont throw any error, just rejecting connection proposal
-                    reject(proposal: proposal)
+                    reject(proposal: proposal, reason: .userRejected)
                 }
-            }
-        } catch {
-            delegate.server(self, didFail: error)
-            //NOTE: for now we dont throw any error, just rejecting connection proposal
-            reject(proposal: proposal)
-            return
-        }
-    }
-
-    //NOTE: Throws an error in case when `sessionProposal` contains mainnets as well as testnets
-    private static func validateProposalForMixedMainnetOrTestnet(_ proposal: WalletConnectSwiftV2.Session.Proposal) throws {
-        struct MixedMainnetsOrTestnetsError: Error {}
-        for namespace in proposal.requiredNamespaces.values {
-            let blockchains = Set(namespace.chains.map { $0.absoluteString })
-            let servers = RPCServer.decodeEip155Array(values: blockchains)
-            let allAreTestnets = servers.allSatisfy { $0.isTestnet }
-            if allAreTestnets {
-                //no-op
-            } else {
-                let allAreMainnets = servers.allSatisfy { !$0.isTestnet }
-                if allAreMainnets {
-                    //no-op
-                } else {
-                    throw MixedMainnetsOrTestnetsError()
-                }
-            }
-        }
+            }.store(in: &cancelable)
     }
 }
 
 fileprivate extension AlphaWallet.WalletConnect.Proposal {
 
-    init(proposal: WalletConnectSwiftV2.Session.Proposal) {
+    init?(proposal: WalletConnectSwiftV2.Session.Proposal) {
         name = proposal.proposer.name
-        dappUrl = URL(string: proposal.proposer.url)!
+        guard let dappUrl = URL(string: proposal.proposer.url) else { return nil }
+        self.dappUrl = dappUrl
         description = proposal.proposer.description
-        iconUrl = proposal.proposer.icons.compactMap({ URL(string: $0) }).first
-        servers = proposal.requiredNamespaces.values.flatMap { RPCServer.decodeEip155Array(values: Set($0.chains.map { $0.absoluteString }) ) }
+        iconUrl = proposal.proposer.icons.compactMap { URL(string: $0) }.first
+        //NOTE: prevent create proposals for non supported chains
+        let servers = proposal.requiredNamespaces.values.flatMap { RPCServer.decodeEip155Array(values: Set($0.chains.map { $0.absoluteString }) ) }
+        guard !servers.isEmpty else { return nil }
+        self.servers = servers
         methods = Array(proposal.requiredNamespaces.values.flatMap { $0.methods })
         serverEditing = .notSupporting
+
     }
 }

@@ -18,6 +18,9 @@ class PopularTokenViewCell: UITableViewCell {
     private var tokenImageView: TokenImageView = {
         let imageView = TokenImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.loading = .disabled
+        imageView.contentMode = .scaleAspectFit
+        
         return imageView
     }()
 
@@ -57,7 +60,7 @@ class PopularTokenViewCell: UITableViewCell {
         titleLabel.baselineAdjustment = .alignCenters
 
         viewsWithContent.forEach { $0.alpha = viewModel.alpha }
-        tokenImageView.subscribable = viewModel.iconImage
+        tokenImageView.set(imageSource: viewModel.iconImage)
 
         blockChainTagLabel.configure(viewModel: viewModel.blockChainTagViewModel)
     }

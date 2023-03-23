@@ -13,11 +13,11 @@ Pod::Spec.new do |spec|
   spec.description      = "Core wallet functionality"
   spec.license      = { :type => "MIT", :file => "LICENSE" }
   spec.author             = { "Vladyslav Shepitko" => "vladyslav.shepitko@gmail.com" }
-  spec.homepage     = "https://github.com/FactorUnoMex/factor-wallet-ios/tree/master/modules/AlphaWalletFoundation"
+  spec.homepage     = "https://github.com/AlphaWallet/alpha-wallet-ios/tree/master/modules/AlphaWalletFoundation"
   spec.ios.deployment_target = '13.0'
   spec.swift_version    = '4.2'
   spec.platform         = :ios, "13.0"
-  spec.source           = { :git => 'git@github.com:FactorUnoMex/factor-wallet-ios.git', :tag => "#{spec.version}" }
+  spec.source           = { :git => 'git@github.com:AlphaWallet/alpha-wallet-ios.git', :tag => "#{spec.version}" }
   spec.source_files     = 'modules/AlphaWalletFoundation/AlphaWalletFoundation/**/*.{h,m,swift}'
   spec.resource_bundles = {'AlphaWalletFoundation' => ['modules/AlphaWalletFoundation/AlphaWalletFoundation/**/*.{graphql,json}'] }
   spec.pod_target_xcconfig = { 'SWIFT_OPTIMIZATION_LEVEL' => '-Owholemodule' }
@@ -33,9 +33,7 @@ Pod::Spec.new do |spec|
   spec.dependency 'SwiftyJSON', '5.0.0'
   spec.dependency 'AlphaWalletWeb3' 
   spec.dependency 'PromiseKit/CorePromise'
-  spec.dependency 'PromiseKit/Alamofire'
   spec.dependency 'Kanna'
-  spec.dependency 'TrustWalletCore', '2.6.34'
   spec.dependency 'EthereumABI'
   spec.dependency 'BlockiesSwift'
   spec.dependency 'PaperTrailLumberjack/Swift'
@@ -44,8 +42,10 @@ Pod::Spec.new do |spec|
   spec.dependency 'AlphaWalletCore'
   spec.dependency 'AlphaWalletGoBack'
   spec.dependency 'AlphaWalletENS'
+  spec.dependency 'AlphaWalletHardwareWallet'
   spec.dependency 'AlphaWalletOpenSea'
   spec.dependency 'AlphaWalletShareExtensionCore'
+  spec.dependency 'AlphaWalletTrustWalletCoreExtensions'
   spec.dependency 'Apollo', '0.53.0'
   spec.dependency 'CombineExt', '1.8.0'
   spec.dependency 'SwiftProtobuf', '~> 1.18.0'

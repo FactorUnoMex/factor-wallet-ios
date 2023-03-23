@@ -103,7 +103,7 @@ build_and_run_booted:
 	#The simulator "name" specified doesn't matter
 	@xcrun xcodebuild -disableAutomaticPackageResolution -scheme AlphaWallet -workspace AlphaWallet.xcworkspace -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 12 Pro,OS=15.4' -derivedDataPath ./build | $(beautify_cmd)
 	@xcrun simctl install booted ./build/Build/Products/Debug-iphonesimulator/AlphaWallet.app
-	@xcrun simctl launch booted net.factor-wallet.alphawallet
+	@xcrun simctl launch booted com.stormbird.alphawallet
 
 update_chains_file:
 	@echo "Deleting chains file in scripts folder."

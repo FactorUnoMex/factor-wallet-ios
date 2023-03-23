@@ -26,7 +26,7 @@ extension RPCServer {
         case .binance_smart_chain_testnet: return R.string.localizable.blockchainBinanceTest()
         case .heco: return R.string.localizable.blockchainHeco()
         case .heco_testnet: return R.string.localizable.blockchainHecoTest()
-        case .main, .callisto, .classic, .poa, .goerli: return R.string.localizable.blockchainEthereum()
+        case .main, .callisto, .classic, .goerli: return R.string.localizable.blockchainEthereum()
         case .fantom: return R.string.localizable.blockchainFantom()
         case .fantom_testnet: return R.string.localizable.blockchainFantomTest()
         case .avalanche: return R.string.localizable.blockchainAvalanche()
@@ -46,6 +46,8 @@ extension RPCServer {
         case .ioTeXTestnet: return "IoTeX Testnet"
         case .optimismGoerli: return "Optimism Goerli"
         case .arbitrumGoerli: return "Arbitrum Goerli"
+        case .okx: return "OKXChain Mainnet"
+        case .sepolia: return "Sepolia"
         }
     }
 
@@ -53,7 +55,6 @@ extension RPCServer {
         switch self {
         case .main: return R.image.eth()
         case .xDai: return R.image.xDai()
-        case .poa: return R.image.tokenPoa()
         case .classic: return R.image.tokenEtc()
         case .callisto: return R.image.tokenCallisto()
         case .artis_sigma1: return R.image.tokenArtis()
@@ -75,39 +76,42 @@ extension RPCServer {
         case .ioTeXTestnet: return R.image.ioTeXTestnet()
         case .optimismGoerli: return nil
         case .arbitrumGoerli: return nil
+        case .okx: return R.image.okc_logo()
+        case .sepolia: return R.image.sepolia()
         }
     }
 
     var blockChainNameColor: UIColor {
         switch self {
-        case .main: return .init(red: 41, green: 134, blue: 175)
-        case .classic: return .init(red: 55, green: 137, blue: 55)
-        case .callisto: return .init(red: 88, green: 56, blue: 163)
-        case .poa: return .init(red: 88, green: 56, blue: 163)
-        case .goerli: return .init(red: 187, green: 174, blue: 154)
-        case .xDai: return .init(red: 253, green: 176, blue: 61)
-        case .artis_sigma1: return .init(red: 83, green: 162, blue: 113)
-        case .artis_tau1: return .init(red: 255, green: 117, blue: 153)
-        case .binance_smart_chain, .binance_smart_chain_testnet: return .init(red: 255, green: 211, blue: 0)
-        case .heco, .heco_testnet: return .init(hex: "1253FC")
-        case .fantom: return .red
-        case .fantom_testnet: return .red
-        case .avalanche: return .red
-        case .avalanche_testnet: return .red
-        case .polygon, .mumbai_testnet: return .init(red: 130, green: 71, blue: 229)
-        case .optimistic: return .red
-        case .cronosMainnet: return .init(hex: "#002D74")
-        case .cronosTestnet: return .red
-        case .arbitrum: return .red
-        case .palm: return .red
-        case .palmTestnet: return .red
-        case .klaytnCypress: return .init(hex: "FE3300")
-        case .klaytnBaobabTestnet: return .init(hex: "313557")
-        case .ioTeX: return .init(hex: "00D4D5")
-        case .ioTeXTestnet: return .init(hex: "00D4D5")
-        case .optimismGoerli: return .red
-        case .arbitrumGoerli: return .red
-        case .custom: return .red
+        case .main: return Configuration.Color.Semantic.blockChainMain
+        case .classic: return Configuration.Color.Semantic.blockChainClassic
+        case .callisto: return Configuration.Color.Semantic.blockChainCallisto
+        case .goerli: return Configuration.Color.Semantic.blockChainGoerli
+        case .xDai: return Configuration.Color.Semantic.blockChainXDai
+        case .artis_sigma1: return Configuration.Color.Semantic.blockChainArtisSigma1
+        case .artis_tau1: return Configuration.Color.Semantic.blockChainArtisTau1
+        case .binance_smart_chain, .binance_smart_chain_testnet: return Configuration.Color.Semantic.blockChainBinanceSmartChain
+        case .heco, .heco_testnet: return Configuration.Color.Semantic.blockChainHeco
+        case .fantom: return Configuration.Color.Semantic.blockChainFantom
+        case .fantom_testnet: return Configuration.Color.Semantic.blockChainFantomTestnet
+        case .avalanche: return Configuration.Color.Semantic.blockChainAvalanche
+        case .avalanche_testnet: return Configuration.Color.Semantic.blockChainAvalancheTestnet
+        case .polygon, .mumbai_testnet: return Configuration.Color.Semantic.blockChainPolygon
+        case .optimistic: return Configuration.Color.Semantic.blockChainOptimistic
+        case .cronosMainnet: return Configuration.Color.Semantic.blockChainCronosMainnet
+        case .cronosTestnet: return Configuration.Color.Semantic.blockChainCronosTestnet
+        case .arbitrum: return Configuration.Color.Semantic.blockChainArbitrum
+        case .palm: return Configuration.Color.Semantic.blockChainPalm
+        case .palmTestnet: return Configuration.Color.Semantic.blockChainPalmTestnet
+        case .klaytnCypress: return Configuration.Color.Semantic.blockChainKlaytnCypress
+        case .klaytnBaobabTestnet: return Configuration.Color.Semantic.blockChainKlaytnBaobabTestnet
+        case .ioTeX: return Configuration.Color.Semantic.blockChainIoTeX
+        case .ioTeXTestnet: return Configuration.Color.Semantic.blockChainIoTeXTestnet
+        case .optimismGoerli: return Configuration.Color.Semantic.blockChainOptimismGoerli
+        case .arbitrumGoerli: return Configuration.Color.Semantic.blockChainArbitrumGoerli
+        case .custom: return Configuration.Color.Semantic.blockChainCustom
+        case .okx: return Configuration.Color.Semantic.blockChainOkx
+        case .sepolia: return Configuration.Color.Semantic.blockChainSepolia
         }
     }
 
@@ -115,7 +119,6 @@ extension RPCServer {
         switch self {
         case .main: return R.image.iconsNetworkEth()
         case .xDai: return R.image.iconsNetworkXdai()
-        case .poa: return R.image.iconsNetworkPoa()
         case .classic: return nil
         case .callisto: return R.image.iconsNetworkCallisto()
         case .artis_sigma1: return nil
@@ -136,6 +139,8 @@ extension RPCServer {
         case .ioTeXTestnet: return R.image.ioTeXTestnet()
         case .optimismGoerli: return nil
         case .arbitrumGoerli: return nil
+        case .okx: return R.image.okc_logo()
+        case .sepolia: return R.image.sepolia()
         }
     }
 }

@@ -15,9 +15,8 @@ class TransferNFTCoordinator: Coordinator {
         let tokenCardViewFactory = TokenCardViewFactory(
             token: token,
             assetDefinitionStore: assetDefinitionStore,
-            analytics: analytics,
-            keystore: keystore,
-            wallet: session.account)
+            wallet: session.account,
+            tokenImageFetcher: tokenImageFetcher)
 
         let viewModel = SendSemiFungibleTokenViewModel(
             token: token,
@@ -35,6 +34,7 @@ class TransferNFTCoordinator: Coordinator {
         return controller
     }()
 
+    private let tokenImageFetcher: TokenImageFetcher
     private let keystore: Keystore
     private let token: Token
     private let session: WalletSession
@@ -61,8 +61,10 @@ class TransferNFTCoordinator: Coordinator {
          analytics: AnalyticsLogger,
          domainResolutionService: DomainResolutionServiceType,
          tokensService: TokenViewModelState,
-         networkService: NetworkService) {
+         networkService: NetworkService,
+         tokenImageFetcher: TokenImageFetcher) {
 
+        self.tokenImageFetcher = tokenImageFetcher
         self.networkService = networkService
         self.tokensService = tokensService
         self.transactionType = transactionType
@@ -104,7 +106,7 @@ extension TransferNFTCoordinator: SendSemiFungibleTokenViewControllerDelegate {
         } catch {
             UIApplication.shared
                 .presentedViewController(or: navigationController)
-                .displayError(message: error.prettyError)
+                .displayError(message: error.localizedDescription)
         }
     }
 
@@ -159,7 +161,7 @@ extension TransferNFTCoordinator: TransactionConfirmationCoordinatorDelegate {
     func coordinator(_ coordinator: TransactionConfirmationCoordinator, didFailTransaction error: Error) {
         UIApplication.shared
             .presentedViewController(or: navigationController)
-            .displayError(message: error.prettyError)
+            .displayError(message: error.localizedDescription)
     }
 
     func didClose(in coordinator: TransactionConfirmationCoordinator) {

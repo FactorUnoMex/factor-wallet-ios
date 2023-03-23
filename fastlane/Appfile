@@ -1,4 +1,4 @@
-app_identifier "net.factor-wallet.alphawallet" # The bundle identifier of your app
+app_identifier "com.stormbird.alphawallet" # The bundle identifier of your app
 team_id "LRAW5PL536" # Developer Portal Team ID
 
 

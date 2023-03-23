@@ -62,7 +62,7 @@ class NewTokenViewController: UIViewController {
         return textField
     }()
     private lazy var symbolTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.inputAccessoryButtonType = .next
         textField.returnKeyType = .next
         textField.delegate = self
@@ -70,7 +70,7 @@ class NewTokenViewController: UIViewController {
         return textField
     }()
     private lazy var decimalsTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.inputAccessoryButtonType = .next
         textField.keyboardType = .decimalPad
         textField.returnKeyType = .next
@@ -79,7 +79,7 @@ class NewTokenViewController: UIViewController {
         return textField
     }()
     private lazy var balanceTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.inputAccessoryButtonType = .next
         textField.keyboardType = .numbersAndPunctuation
         textField.delegate = self
@@ -87,7 +87,7 @@ class NewTokenViewController: UIViewController {
         return textField
     }()
     private lazy var nameTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.inputAccessoryButtonType = .done
         textField.returnKeyType = .done
         textField.delegate = self
@@ -318,7 +318,7 @@ class NewTokenViewController: UIViewController {
         var balance: [String] = viewModel.erc875TokenBalance
 
         guard let address = AlphaWallet.Address(string: contract) else {
-            addressTextField.errorState = .error(InputError.invalidAddress.prettyError)
+            addressTextField.errorState = .error(InputError.invalidAddress.localizedDescription)
             return
         }
         addressTextField.errorState = .none
@@ -378,7 +378,7 @@ extension NewTokenViewController: AddressTextFieldDelegate {
     }
 
     func displayError(error: Error, for textField: AddressTextField) {
-        textField.errorState = .error(error.prettyError)
+        textField.errorState = .error(error.localizedDescription)
     }
 
     func openQRCodeReader(for textField: AddressTextField) {

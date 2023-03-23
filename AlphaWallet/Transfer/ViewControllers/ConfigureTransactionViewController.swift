@@ -20,7 +20,7 @@ class ConfigureTransactionViewController: UIViewController {
     }()
 
     private lazy var nonceTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.delegate = self
         textField.keyboardType = .decimalPad
 
@@ -28,7 +28,7 @@ class ConfigureTransactionViewController: UIViewController {
     }()
 
     private lazy var totalFeeTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.delegate = self
         textField.inputAccessoryButtonType = .none
         textField.keyboardType = .decimalPad
@@ -37,7 +37,7 @@ class ConfigureTransactionViewController: UIViewController {
     }()
 
     private lazy var dataTextField: TextField = {
-        let textField = TextField.textField
+        let textField = TextField.buildTextField()
         textField.delegate = self
         textField.inputAccessoryButtonType = .done
         textField.keyboardType = .decimalPad
@@ -89,7 +89,7 @@ class ConfigureTransactionViewController: UIViewController {
         NSLayoutConstraint.activate([
             containerView.anchorsIgnoringBottomSafeArea(to: view)
         ])
-        
+
         handleRecovery()
         generateViews(viewModel: viewModel)
     }
@@ -197,8 +197,8 @@ class ConfigureTransactionViewController: UIViewController {
     private func createTableFooterForGasPriceWarning(_ gasPriceWarning: TransactionConfigurator.GasPriceWarning) -> UIView {
         let background = UIView()
         background.translatesAutoresizingMaskIntoConstraints = false
-        background.backgroundColor = .init(red: 255, green: 235, blue: 234)
-        background.borderColor = .init(red: 252, green: 187, blue: 183)
+        background.backgroundColor = Configuration.Color.Semantic.configureTransactionBackground
+        background.borderColor = Configuration.Color.Semantic.configureTransactionBorder
         background.cornerRadius = 8
         background.borderWidth = 1
 
@@ -240,7 +240,7 @@ class ConfigureTransactionViewController: UIViewController {
             warningIcon.widthAnchor.constraint(equalToConstant: 24),
             warningIcon.widthAnchor.constraint(equalTo: warningIcon.heightAnchor),
 
-            descriptionLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -50) 
+            descriptionLabel.widthAnchor.constraint(equalTo: stackView.widthAnchor, constant: -50)
         ])
 
         return background
@@ -350,6 +350,16 @@ class ConfigureTransactionViewController: UIViewController {
         lastSavedConfiguration = newConfiguration
         return newConfiguration
     }
+
+    private func moveFocusToNextTextField(afterTextField textField: UIView) {
+        if textField == gasPriceTextField {
+            gasLimitTextField.becomeFirstResponder()
+        } else if textField == gasLimitTextField {
+            nonceTextField.becomeFirstResponder()
+        } else if textField == nonceTextField {
+            dataTextField.becomeFirstResponder()
+        }
+    }
 }
 
 extension ConfigureTransactionViewController: SlidableTextFieldDelegate {
@@ -362,14 +372,7 @@ extension ConfigureTransactionViewController: SlidableTextFieldDelegate {
     }
 
     func nextButtonTapped(for textField: SlidableTextField) {
-        switch textField {
-        case gasPriceTextField:
-            gasLimitTextField.becomeFirstResponder()
-        case gasLimitTextField:
-            nonceTextField.becomeFirstResponder()
-        default:
-            break
-        }
+        moveFocusToNextTextField(afterTextField: textField)
     }
 
     func textField(_ textField: SlidableTextField, textDidChange value: Int) {
@@ -416,7 +419,7 @@ extension ConfigureTransactionViewController {
         }
 
         typealias ContainerView = TokensViewController.ContainerView<UIView>
-        
+
         for indexPath in viewModel.indexPaths {
             switch viewModel.sections[indexPath.section] {
             case .configurations:
@@ -490,24 +493,18 @@ extension ConfigureTransactionViewController: TextFieldDelegate {
     }
 
     func nextButtonTapped(for textField: TextField) {
-        if textField == gasPriceTextField {
-            gasLimitTextField.becomeFirstResponder()
-        } else if textField == gasLimitTextField {
-            nonceTextField.becomeFirstResponder()
-        } else if textField == nonceTextField {
-            dataTextField.becomeFirstResponder()
-        }
+        moveFocusToNextTextField(afterTextField: textField)
     }
 
     func shouldChangeCharacters(inRange range: NSRange, replacementString string: String, for textField: TextField) -> Bool {
         let value = (textField.value as NSString).replacingCharacters(in: range, with: string)
 
-        if textField == dataTextField.textField {
+        if textField == dataTextField {
             viewModel.configurationToEdit.dataRawValue = value
-        } else if textField == nonceTextField.textField {
+        } else if textField == nonceTextField {
             viewModel.configurationToEdit.nonceRawValue = Int(value)
         }
 
         return true
     }
-} 
+}

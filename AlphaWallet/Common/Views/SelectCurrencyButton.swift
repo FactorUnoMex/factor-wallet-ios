@@ -7,6 +7,7 @@
 
 import UIKit
 import AlphaWalletFoundation
+import Combine
 
 class SelectCurrencyButton: UIControl {
 
@@ -36,7 +37,9 @@ class SelectCurrencyButton: UIControl {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.setContentHuggingPriority(.required, for: .horizontal)
         imageView.setContentCompressionResistancePriority(.required, for: .horizontal)
-
+        imageView.loading = .disabled
+        imageView.contentMode = .scaleAspectFit
+        
         return imageView
     }()
 
@@ -56,11 +59,6 @@ class SelectCurrencyButton: UIControl {
     var text: String {
         get { return textLabel.text ?? "" }
         set { textLabel.text = newValue }
-    }
-
-    var tokenIcon: Subscribable<TokenImage>? {
-        get { currencyIconImageView.subscribable }
-        set { currencyIconImageView.subscribable = newValue }
     }
 
     var hasToken: Bool = true {
@@ -106,6 +104,10 @@ class SelectCurrencyButton: UIControl {
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         return nil
+    }
+
+    func set(imageSource: TokenImagePublisher) {
+        currencyIconImageView.set(imageSource: imageSource)
     }
 
     override func addTarget(_ target: Any?, action: Selector, for controlEvents: UIControl.Event) {

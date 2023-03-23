@@ -6,7 +6,7 @@ import AlphaWalletFoundation
 
 func applyStyle() {
     UIBarButtonItem.appearance(whenContainedInInstancesOf: [UIDocumentBrowserViewController.self]).tintColor = Configuration.Color.Semantic.navigationBarButtonItemTint
-    UIWindow.appearance().tintColor = Colors.appTint
+    UIWindow.appearance().tintColor = Configuration.Color.Semantic.appTint
 
     UINavigationBar.appearance().shadowImage = UIImage(color: Configuration.Color.Semantic.navigationBarSeparator, size: CGSize(width: 0.25, height: 0.25))
     UINavigationBar.appearance().compactAppearance = UINavigationBarAppearance.defaultAppearence
@@ -18,7 +18,7 @@ func applyStyle() {
     UIBarButtonItem.appearance().tintColor = Configuration.Color.Semantic.navigationBarButtonItemTint
     UIBarButtonItem.appearance(whenContainedInInstancesOf: [UIToolbar.self]).tintColor = Configuration.Color.Semantic.navigationBarButtonItemTint
 
-    UIToolbar.appearance().tintColor = Colors.appTint
+    UIToolbar.appearance().tintColor = Configuration.Color.Semantic.appTint
 
     //Background (not needed in iOS 12.1 on simulator)
     //Cancel button
@@ -28,7 +28,7 @@ func applyStyle() {
 
     UIRefreshControl.appearance().tintColor = Configuration.Color.Semantic.refreshControl
 
-    UISwitch.appearance().onTintColor = Colors.appTint
+    UISwitch.appearance().onTintColor = Configuration.Color.Semantic.appTint
 
     UITableView.appearance().separatorColor = Configuration.Color.Semantic.tableViewSeparator
 }
@@ -51,7 +51,7 @@ extension UINavigationBarAppearance {
         ]
         //NOTE: Hides back button text
         appearance.backButtonAppearance.normal.titleTextAttributes = [
-            .foregroundColor: UIColor.clear
+            .foregroundColor: Configuration.Color.Semantic.backButtonText
         ]
 
         return appearance
@@ -73,7 +73,7 @@ extension UITabBarAppearance {
         ]
         tabBarItemAppearance.selected.titleTextAttributes = [
             .font: Fonts.semibold(size: 13),
-            .foregroundColor: Colors.appTint
+            .foregroundColor: Configuration.Color.Semantic.appTint
         ]
 
         tabBarAppearance.stackedLayoutAppearance = tabBarItemAppearance
@@ -97,14 +97,6 @@ extension UITabBarController {
 
         return tabBarController
     }
-}
-
-struct Colors {
-    static let appText = R.color.black()!
-    static let appTint = R.color.azure()!
-    static let appWhite = UIColor.white
-    static let black = UIColor(hex: "313849")
-    static let darkGray = UIColor(hex: "2f2f2f")
 }
 
 struct Fonts {
@@ -143,7 +135,7 @@ enum DataEntry {
                 static let shadowOffset = CGSize(width: 0, height: 0)
                 static let shadowOpacity = Float(0.15)
                 static let shadowRadius = CGFloat(6)
-                static let shadowColor = UIColor.black
+                static let shadowColor = Configuration.Color.Semantic.dappsIconShadow
             }
         }
 

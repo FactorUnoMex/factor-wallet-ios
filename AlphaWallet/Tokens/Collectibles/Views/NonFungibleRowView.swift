@@ -23,7 +23,8 @@ class NonFungibleRowView: TokenCardViewRepresentable {
         imageView.rounding = .none
         imageView.isChainOverlayHidden = true
         imageView.contentMode = .scaleAspectFill
-
+        imageView.loading = .disabled
+        
         return imageView
     }()
 
@@ -108,7 +109,7 @@ class NonFungibleRowView: TokenCardViewRepresentable {
 
     func configure(viewModel: NonFungibleRowViewModel) {
         thumbnailImageView.contentBackgroundColor = viewModel.contentBackgroundColor
-        thumbnailImageView.subscribable = viewModel.assetImage
+        thumbnailImageView.set(imageSource: viewModel.assetImage)
         descriptionLabel.attributedText = viewModel.description
         titleLabel.attributedText = viewModel.title
     }

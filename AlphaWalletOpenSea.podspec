@@ -14,11 +14,11 @@ Pod::Spec.new do |spec|
   spec.license      = { :type => "MIT", :file => "LICENSE" }
   spec.author             = { "Hwee-Boon Yar" => "hboon@motionobj.com" }
   spec.social_media_url   = "https://twitter.com/hboon"
-  spec.homepage     = "https://github.com/FactorUnoMex/factor-wallet-ios/tree/master/modules/AlphaWalletOpenSea"
+  spec.homepage     = "https://github.com/AlphaWallet/alpha-wallet-ios/tree/master/modules/AlphaWalletOpenSea"
   spec.ios.deployment_target = '13.0'
   spec.swift_version    = '4.0'
   spec.platform         = :ios, "13.0"
-  spec.source           = { :git => 'git@github.com:FactorUnoMex/factor-wallet-ios.git', :tag => "#{spec.version}" }
+  spec.source           = { :git => 'git@github.com:AlphaWallet/alpha-wallet-ios.git', :tag => "#{spec.version}" }
   spec.source_files     = 'modules/AlphaWalletOpenSea/AlphaWalletOpenSea/**/*.{h,m,swift}'
   spec.pod_target_xcconfig = { 'SWIFT_OPTIMIZATION_LEVEL' => '-Owholemodule' }
 

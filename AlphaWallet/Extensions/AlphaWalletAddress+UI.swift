@@ -8,8 +8,6 @@ extension AlphaWallet.Address {
     var tokenImage: UIImage? {
 
         switch eip55String {
-        case "0x84f22a9222Bb2833004bf4c21cBdBbB2CF4E1c9E":
-            return R.image.tokenFCTR()
         case "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643":
             return R.image.tokenCdai()
         case "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359":

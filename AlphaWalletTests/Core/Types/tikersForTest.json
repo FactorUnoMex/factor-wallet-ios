@@ -36629,14 +36629,6 @@
     }
   },
   {
-    "id": "factorcoin",
-    "symbol": "fctr",
-    "name": "FactorCoin",
-    "platforms": {
-      "binance-smart-chain": "0x84f22a9222bb2833004bf4c21cbdbbb2cf4e1c9e"
-    }
-  },
-  {
     "id": "facts",
     "symbol": "bkc",
     "name": "FACTS",

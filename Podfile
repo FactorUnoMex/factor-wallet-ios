@@ -11,7 +11,7 @@ target 'AlphaWallet' do
   pod 'QRCodeReaderViewController', :git=>'https://github.com/AlphaWallet/QRCodeReaderViewController.git', :commit=>'30d1a2a7d167d0d207ae0ae3a4d81bcf473d7a65'
   pod 'KeychainSwift', :git=>'https://github.com/AlphaWallet/keychain-swift.git', :commit=> 'b797d40a9d08ec509db4335140cf2259b226e6a2'
   pod 'Kingfisher', '~> 7.0'
-  pod 'AlphaWalletWeb3Provider', :git=>'https://github.com/AlphaWallet/AlphaWallet-web3-provider', :commit => '9a4496d02b7ddb2f6307fd0510d8d7c9fcef9870'
+  pod 'AlphaWalletWeb3Provider', :git=>'https://github.com/AlphaWallet/AlphaWallet-web3-provider', :commit => 'bdb38b06eeedeb4ca1e32d3ecd81783b5116ae68'
   pod 'TrezorCrypto', :git=>'https://github.com/AlphaWallet/trezor-crypto-ios.git', :commit => '50c16ba5527e269bbc838e80aee5bac0fe304cc7'
   pod 'TrustKeystore', :git => 'https://github.com/AlphaWallet/latest-keystore-snapshot', :commit => 'c0bdc4f6ffc117b103e19d17b83109d4f5a0e764'
   pod 'SAMKeychain'
@@ -24,12 +24,14 @@ target 'AlphaWallet' do
   pod 'AlphaWalletCore', :path => '.'
   pod 'AlphaWalletGoBack', :path => '.'
   pod 'AlphaWalletENS', :path => '.'
+  pod 'AlphaWalletHardwareWallet', :path => '.'
   pod 'AlphaWalletLogger', :path => '.'
   pod 'AlphaWalletOpenSea', :path => '.'
   pod 'AlphaWalletFoundation', :path => '.'
   pod 'AlphaWalletTrackAPICalls', :path => '.'
   pod 'AlphaWalletWeb3', :path => '.'
   pod 'AlphaWalletShareExtensionCore', :path => '.'
+  pod 'AlphaWalletTrustWalletCoreExtensions', :path => '.'
   pod 'MailchimpSDK'
   pod 'xcbeautify'
   pod 'FloatingPanel'
@@ -38,7 +40,8 @@ target 'AlphaWallet' do
   pod 'SwiftLint', '0.50.3', :configuration => 'Debug'
   pod 'SwiftFormat/CLI', '~> 0.49', :configuration => 'Debug'
 
-  pod 'WalletConnectSwiftV2', '~> 1.0.2'
+  pod 'WalletConnectSwiftV2', :git => 'https://github.com/WalletConnect/WalletConnectSwiftV2.git', :tag => '1.3.1'
+  pod 'WalletConnectSwiftV2/Web3Wallet', :git => 'https://github.com/WalletConnect/WalletConnectSwiftV2.git', :tag => '1.3.1'
   pod 'FirebaseCrashlytics', '8.10.0'
   pod 'WalletConnectSwift', :git => 'https://github.com/AlphaWallet/WalletConnectSwift.git', :branch => 'alphaWallet'
   pod 'Starscream', '3.1.1'
@@ -89,6 +92,14 @@ post_install do |installer|
       target.build_configurations.each do |config|
         config.build_settings['SWIFT_VERSION'] = '4.2'
       end
+    end
+
+    #Work around for build warning:
+    #    Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this warning, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase.
+    #From https://github.com/realm/realm-swift/issues/7957#issuecomment-1248556797
+    if ['Realm'].include? target.name
+      create_symlink_phase = target.shell_script_build_phases.find { |x| x.name == 'Create Symlinks to Header Folders' }
+      create_symlink_phase.always_out_of_date = "1"
     end
 
     target.build_configurations.each do |config|

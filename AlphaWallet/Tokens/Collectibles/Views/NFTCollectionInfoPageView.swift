@@ -14,20 +14,30 @@ protocol NFTCollectionInfoPageViewDelegate: AnyObject {
     func didPressViewContractWebPage(forContract contract: AlphaWallet.Address, in view: NFTCollectionInfoPageView)
 }
 
+//TODO: move to separate view controller like fungible screen does
 class NFTCollectionInfoPageView: ScrollableStackView, PageViewType {
     private var previewView: NFTPreviewViewRepresentable
     private let viewModel: NFTCollectionInfoPageViewModel
     private var cancelable = Set<AnyCancellable>()
+    private let selection = PassthroughSubject<IndexPath, Never>()
 
     weak var delegate: NFTCollectionInfoPageViewDelegate?
     var rightBarButtonItem: UIBarButtonItem?
     var title: String { return viewModel.tabTitle }
 
-    init(viewModel: NFTCollectionInfoPageViewModel, session: WalletSession, tokenCardViewFactory: TokenCardViewFactory) {
+    init(viewModel: NFTCollectionInfoPageViewModel,
+         session: WalletSession,
+         tokenCardViewFactory: TokenCardViewFactory) {
+
         self.viewModel = viewModel
-        self.previewView = tokenCardViewFactory.createPreview(of: viewModel.previewViewType, session: session, edgeInsets: viewModel.previewEdgeInsets)
+        self.previewView = tokenCardViewFactory.createPreview(
+            of: viewModel.previewViewType,
+            session: session,
+            edgeInsets: viewModel.previewEdgeInsets,
+            playButtonPositioning: .bottomRight)
         self.previewView.rounding = .custom(20)
         self.previewView.contentMode = .scaleAspectFill
+
         super.init()
 
         translatesAutoresizingMaskIntoConstraints = false
@@ -72,7 +82,7 @@ class NFTCollectionInfoPageView: ScrollableStackView, PageViewType {
     }
 
     private func bind(viewModel: NFTCollectionInfoPageViewModel) {
-        let input = NFTCollectionInfoPageViewModelInput()
+        let input = NFTCollectionInfoPageViewModelInput(selection: selection.eraseToAnyPublisher())
         let output = viewModel.transform(input: input)
 
         output.viewState
@@ -81,6 +91,10 @@ class NFTCollectionInfoPageView: ScrollableStackView, PageViewType {
                 previewView?.configure(params: state.previewViewParams)
                 previewView?.contentBackgroundColor = state.previewViewContentBackgroundColor
             }.store(in: &cancelable)
+
+        output.attributeAction
+            .sink { [weak self] in self?.handle(action: $0) }
+            .store(in: &cancelable)
     }
 
     required init?(coder: NSCoder) {
@@ -90,11 +104,17 @@ class NFTCollectionInfoPageView: ScrollableStackView, PageViewType {
     @objc private func showContractWebPage() {
         delegate?.didPressViewContractWebPage(forContract: viewModel.contractAddress, in: self)
     }
+
+    private func handle(action: NFTCollectionInfoPageViewModel.AttributeSelectionAction) {
+        switch action {
+        case .openUrl(let url):
+            delegate?.didPressOpenWebPage(url, in: self)
+        }
+    }
 }
 
 extension NFTCollectionInfoPageView: TokenAttributeViewDelegate {
     func didSelect(in view: TokenAttributeView) {
-        guard let url = viewModel.urlForField(indexPath: view.indexPath) else { return }
-        delegate?.didPressOpenWebPage(url, in: self)
+        selection.send(view.indexPath)
     }
 }

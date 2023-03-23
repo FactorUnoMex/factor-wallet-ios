@@ -9,14 +9,12 @@ protocol TokensViewControllerDelegate: AnyObject {
     func didSelect(token: Token, in viewController: UIViewController)
     func didTapOpenConsole(in viewController: UIViewController)
     func walletConnectSelected(in viewController: UIViewController)
-    func whereAreMyTokensSelected(in viewController: UIViewController)
     func buyCryptoSelected(in viewController: UIViewController)
 }
 
 final class TokensViewController: UIViewController {
     private var cancellable = Set<AnyCancellable>()
     private let appear = PassthroughSubject<Void, Never>()
-    private let _pullToRefresh = PassthroughSubject<Void, Never>()
     private let selection = PassthroughSubject<TokensViewModel.SelectionSource, Never>()
     let viewModel: TokensViewModel
 
@@ -37,7 +35,7 @@ final class TokensViewController: UIViewController {
     }()
 
     private lazy var tableView: UITableView = {
-        let tableView = UITableView.grouped
+        let tableView = UITableView.buildGroupedTableView()
 
         tableView.register(FungibleTokenViewCell.self)
         tableView.register(EthTokenViewCell.self)
@@ -72,7 +70,7 @@ final class TokensViewController: UIViewController {
     private lazy var consoleButton: UIButton = {
         let consoleButton = tableViewHeader.consoleButton
         consoleButton.titleLabel?.font = Fonts.regular(size: 22)
-        consoleButton.setTitleColor(Colors.black, for: .normal)
+        consoleButton.setTitleColor(Configuration.Color.Semantic.defaultForegroundText, for: .normal)
         consoleButton.setTitle(R.string.localizable.tokenScriptShowErrors(), for: .normal)
         consoleButton.bounds.size.height = 44
         consoleButton.isHidden = true
@@ -96,14 +94,6 @@ final class TokensViewController: UIViewController {
         keyboardChecker.constraints = [bottomConstraint]
 
         return keyboardChecker
-    }()
-
-    private lazy var whereAreMyTokensView: AddHideTokensView = {
-        let view = AddHideTokensView()
-        view.delegate = self
-        view.configure(viewModel: ShowAddHideTokensViewModel.configuredForTestnet())
-
-        return view
     }()
 
     private var isConsoleButtonHidden: Bool {
@@ -189,7 +179,6 @@ final class TokensViewController: UIViewController {
 
         filterView.addTarget(self, action: #selector(didTapSegment), for: .touchUpInside)
         consoleButton.addTarget(self, action: #selector(openConsole), for: .touchUpInside)
-        refreshControl.addTarget(self, action: #selector(pullToRefresh), for: .valueChanged)
 
         buttonsBar.configure(.primary(buttons: 1))
         buttonsBar.buttons[0].addTarget(self, action: #selector(buyCryptoSelected), for: .touchUpInside)
@@ -217,10 +206,6 @@ final class TokensViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         showNavigationBarTopSeparatorLine()
-    }
-
-    @objc func pullToRefresh() {
-        _pullToRefresh.send(())
     }
 
     @objc func openConsole() {
@@ -253,7 +238,7 @@ final class TokensViewController: UIViewController {
 
         let input = TokensViewModelInput(
             appear: appear.eraseToAnyPublisher(),
-            pullToRefresh: _pullToRefresh.eraseToAnyPublisher(),
+            pullToRefresh: refreshControl.publisher(forEvent: .valueChanged).eraseToAnyPublisher(),
             selection: selection.eraseToAnyPublisher(),
             keyboard: keyboardChecker.publisher)
 
@@ -269,8 +254,8 @@ final class TokensViewController: UIViewController {
             .sink { [weak self, weak walletSummaryView, blockieImageView, navigationItem] state in
                 self?.showOrHideBackupWalletViewHolder()
 
-                walletSummaryView?.configure(viewModel: .init(walletSummary: state.summary, config: viewModel.config, alignment: .center))
-                blockieImageView.setBlockieImage(image: state.blockiesImage)
+                walletSummaryView?.configure(viewModel: .init(walletSummary: state.summary, alignment: .center))
+                blockieImageView.set(blockieImage: state.blockiesImage)
 
                 navigationItem.title = state.title
                 self?.isConsoleButtonHidden = state.isConsoleButtonHidden
@@ -373,13 +358,6 @@ extension TokensViewController: UITableViewDelegate {
             let header: ActiveWalletSessionView = tableView.dequeueReusableHeaderFooterView()
             header.configure(viewModel: .init(count: viewModel.walletConnectSessions))
             header.delegate = self
-
-            return header
-        case .testnetTokens:
-            let header: TokensViewController.GeneralTableViewSectionHeader<AddHideTokensView> = tableView.dequeueReusableHeaderFooterView()
-            header.useSeparatorTopLine = true
-            header.useSeparatorBottomLine = viewModel.isBottomSeparatorLineHiddenForTestnetHeader(section: section)
-            header.subview = whereAreMyTokensView
 
             return header
         case .search:
@@ -502,13 +480,6 @@ fileprivate extension TokensViewController {
         }
 
         dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
-    }
-}
-
-extension TokensViewController: AddHideTokensViewDelegate {
-
-    func view(_ view: AddHideTokensView, didSelectAddHideTokensButton sender: UIButton) {
-        delegate?.whereAreMyTokensSelected(in: self)
     }
 }
 

@@ -23,7 +23,10 @@ class WalletApiCoordinator: NSObject, Coordinator {
     var coordinators: [Coordinator] = []
     weak var delegate: WalletApiCoordinatorDelegate?
 
-    init(keystore: Keystore, navigationController: UINavigationController, analytics: AnalyticsLogger) {
+    init(keystore: Keystore,
+         navigationController: UINavigationController,
+         analytics: AnalyticsLogger) {
+
         self.keystore = keystore
         self.navigationController = navigationController
         self.analytics = analytics
@@ -104,7 +107,7 @@ class WalletApiCoordinator: NSObject, Coordinator {
     private func displayError(_ error: Error, completion: @escaping () -> Void) {
         UIApplication.shared
             .presentedViewController(or: navigationController)
-            .displayError(message: error.prettyError, completion: completion)
+            .displayError(message: error.localizedDescription, completion: completion)
     }
 
     private func acceptProposal(proposalType: ProposalType) -> Promise<ProposalResult> {
@@ -114,7 +117,6 @@ class WalletApiCoordinator: NSObject, Coordinator {
 
     private func signPersonalMessage(with type: SignMessageType, account: AlphaWallet.Address, requester: RequesterViewModel) -> Promise<Data> {
         infoLog("[WalletApi] signMessage: \(type)")
-
         return SignMessageCoordinator.promise(analytics: analytics, navigationController: navigationController, keystore: keystore, coordinator: self, signType: type, account: account, source: .deepLink, requester: requester)
     }
 }

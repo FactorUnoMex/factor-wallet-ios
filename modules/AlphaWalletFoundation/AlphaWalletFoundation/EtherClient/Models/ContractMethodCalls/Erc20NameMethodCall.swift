@@ -8,7 +8,7 @@
 import Foundation
 import AlphaWalletWeb3
 
-class Erc20NameMethodCall: ContractMethodCall {
+struct Erc20NameMethodCall: ContractMethodCall {
     typealias Response = String
 
     let contract: AlphaWallet.Address
@@ -19,11 +19,7 @@ class Erc20NameMethodCall: ContractMethodCall {
         self.contract = contract
     }
 
-    func response(from resultObject: Any) throws -> String {
-        guard let dictionary = resultObject as? [String: AnyObject] else {
-            throw CastError(actualValue: resultObject, expectedType: [String: AnyObject].self)
-        }
-
+    func response(from dictionary: [String: Any]) throws -> String {
         guard let name = dictionary["0"] as? String else {
             throw CastError(actualValue: dictionary["0"], expectedType: String.self)
         }

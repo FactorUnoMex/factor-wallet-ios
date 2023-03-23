@@ -7,6 +7,7 @@
 
 import UIKit
 import AlphaWalletFoundation
+import Combine
 
 protocol SendSemiFungibleTokenViewControllerDelegate: AnyObject, CanOpenURL {
     func didEnterWalletAddress(tokenHolders: [TokenHolder], to recipient: AlphaWallet.Address, in viewController: SendSemiFungibleTokenViewController)
@@ -46,17 +47,15 @@ final class SendSemiFungibleTokenViewController: UIViewController, TokenVerifiab
         return view
     }()
 
-    private lazy var selectTokenCardAmountView: SelectTokenCardAmountView = {
-        let view = SelectTokenCardAmountView(viewModel: viewModel.selectionViewModel)
-        view.delegate = self
-
-        return view
+    private lazy var selectTokenCardAmountView: SelectAssetAmountView = {
+        return SelectAssetAmountView(viewModel: viewModel.selectionViewModel)
     }()
 
     private let buttonsBar = HorizontalButtonsBar(configuration: .primary(buttons: 1))
     private let viewModel: SendSemiFungibleTokenViewModel
     private let tokenCardViewFactory: TokenCardViewFactory
     private let domainResolutionService: DomainResolutionServiceType
+    private var cancellable = Set<AnyCancellable>()
 
     var contract: AlphaWallet.Address {
         return viewModel.token.contractAddress
@@ -168,7 +167,7 @@ final class SendSemiFungibleTokenViewController: UIViewController, TokenVerifiab
         if let address = AlphaWallet.Address(string: targetAddressTextField.value.trimmed) {
             delegate?.didEnterWalletAddress(tokenHolders: viewModel.tokenHolders, to: address, in: self)
         } else {
-            targetAddressTextField.errorState = .error(InputError.invalidAddress.prettyError)
+            targetAddressTextField.errorState = .error(InputError.invalidAddress.localizedDescription)
         }
     }
 
@@ -178,10 +177,10 @@ final class SendSemiFungibleTokenViewController: UIViewController, TokenVerifiab
 
         view.backgroundColor = Configuration.Color.Semantic.defaultViewBackground
 
-        selectTokenCardAmountView.configure(viewModel: viewModel.selectionViewModel)
-
         amountHeaderView.isHidden = viewModel.isAmountSelectionHidden
         selectTokenCardAmountView.isHidden = viewModel.isAmountSelectionHidden
+
+        viewModel.transform()
     }
 }
 
@@ -220,7 +219,7 @@ extension SendSemiFungibleTokenViewController: AddressTextFieldDelegate {
     }
 
     func displayError(error: Error, for textField: AddressTextField) {
-        targetAddressTextField.errorState = .error(InputError.invalidAddress.prettyError)
+        targetAddressTextField.errorState = .error(InputError.invalidAddress.localizedDescription)
     }
 
     func openQRCodeReader(for textField: AddressTextField) {
@@ -238,11 +237,5 @@ extension SendSemiFungibleTokenViewController: AddressTextFieldDelegate {
 
     func didChange(to string: String, in textField: AddressTextField) {
         //no-op
-    }
-}
-
-extension SendSemiFungibleTokenViewController: SelectTokenCardAmountViewDelegate {
-    func valueDidChange(in view: SelectTokenCardAmountView) {
-        viewModel.updateSelectedAmount(view.viewModel.counter)
     }
 }

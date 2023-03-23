@@ -23,7 +23,7 @@ final class SwapTokensCoordinator: Coordinator {
     private let navigationController: UINavigationController
     private lazy var rootViewController: SwapTokensViewController = {
         let viewModel = SwapTokensViewModel(configurator: configurator, tokensService: tokenCollection)
-        let viewController = SwapTokensViewController(viewModel: viewModel)
+        let viewController = SwapTokensViewController(viewModel: viewModel, tokenImageFetcher: tokenImageFetcher)
         viewController.navigationItem.rightBarButtonItems = [
             UIBarButtonItem.settingsBarButton(self, selector: #selector(swapConfiguratinSelected)),
             UIBarButtonItem(customView: viewController.loadingIndicatorView)
@@ -52,6 +52,7 @@ final class SwapTokensCoordinator: Coordinator {
     private let tokensFilter: TokensFilter
     private let networkService: NetworkService
     private let transactionDataStore: TransactionDataStore
+    private let tokenImageFetcher: TokenImageFetcher
 
     var coordinators: [Coordinator] = []
     weak var delegate: SwapTokensCoordinatorDelegate?
@@ -65,8 +66,10 @@ final class SwapTokensCoordinator: Coordinator {
          tokenCollection: TokenCollection,
          tokensFilter: TokensFilter,
          networkService: NetworkService,
-         transactionDataStore: TransactionDataStore) {
+         transactionDataStore: TransactionDataStore,
+         tokenImageFetcher: TokenImageFetcher) {
 
+        self.tokenImageFetcher = tokenImageFetcher
         self.transactionDataStore = transactionDataStore
         self.networkService = networkService
         self.tokensFilter = tokensFilter
@@ -99,7 +102,8 @@ final class SwapTokensCoordinator: Coordinator {
             tokenCollection: tokenCollection,
             tokensFilter: tokensFilter,
             navigationController: navigationController,
-            filter: .filter(tokenSelectionProvider))
+            filter: .filter(tokenSelectionProvider),
+            tokenImageFetcher: tokenImageFetcher)
 
         coordinator.rootViewController.navigationItem.leftBarButtonItem = UIBarButtonItem.logoBarButton()
         coordinator.delegate = self
@@ -201,7 +205,7 @@ extension SwapTokensCoordinator: ApproveSwapProviderDelegate {
         } else {
             UIApplication.shared
                 .presentedViewController(or: navigationController)
-                .displayError(message: error.prettyError)
+                .displayError(message: error.localizedDescription)
         }
     }
 
@@ -265,8 +269,8 @@ extension SwapTokensCoordinator: ApproveSwapProviderDelegate {
                 return transaction.id
             }
         }.recover { error -> Promise<String> in
-            //TODO no good to have `DAppError` here, but this is because of `TransactionConfirmationCoordinatorBridgeToPromise`. Maybe good to have a global "UserCancelled" or something? If enum, not too many cases? To avoid `switch`
-            if case DAppError.cancelled = error {
+            //TODO no good to have `JsonRpcError` here, but this is because of `TransactionConfirmationCoordinatorBridgeToPromise`. Maybe good to have a global "UserCancelled" or something? If enum, not too many cases? To avoid `switch`
+            if let e = error as? JsonRpcError, e == .requestRejected {
                 throw SwapError.userCancelledApproval
             } else {
                 throw error
@@ -277,7 +281,7 @@ extension SwapTokensCoordinator: ApproveSwapProviderDelegate {
     private func showError(_ error: Error) {
         UIApplication.shared
             .presentedViewController(or: navigationController)
-            .displayError(message: error.prettyError)
+            .displayError(message: error.localizedDescription)
     }
 }
 
@@ -309,7 +313,7 @@ extension SwapTokensCoordinator: TransactionConfirmationCoordinatorDelegate {
     func coordinator(_ coordinator: TransactionConfirmationCoordinator, didFailTransaction error: Error) {
         UIApplication.shared
             .presentedViewController(or: navigationController)
-            .displayError(message: error.prettyError)
+            .displayError(message: error.localizedDescription)
     }
 
     func didClose(in coordinator: TransactionConfirmationCoordinator) {

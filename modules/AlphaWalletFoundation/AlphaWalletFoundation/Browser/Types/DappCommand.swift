@@ -90,7 +90,7 @@ public enum DappCallbackValue {
     case signMessage(Data)
     case signPersonalMessage(Data)
     case signTypedMessage(Data)
-    case signTypedMessageV3(Data)
+    case signEip712v3And4(Data)
     case ethCall(String)
     case walletAddEthereumChain
     case walletSwitchEthereumChain
@@ -107,7 +107,7 @@ public enum DappCallbackValue {
             return data.hexEncoded
         case .signTypedMessage(let data):
             return data.hexEncoded
-        case .signTypedMessageV3(let data):
+        case .signEip712v3And4(let data):
             return data.hexEncoded
         case .ethCall(let value):
             return value
@@ -172,6 +172,10 @@ public struct WalletAddEthereumChainObject: Decodable, CustomStringConvertible {
     public let chainName: String?
     public let chainId: String
     public let rpcUrls: [String]?
+
+    public var server: RPCServer? {
+        return Int(chainId0xString: chainId).flatMap { RPCServer(chainIdOptional: $0) }
+    }
 
     public init(nativeCurrency: NativeCurrency?, blockExplorerUrls: [String]?, chainName: String?, chainId: String, rpcUrls: [String]?) {
         self.nativeCurrency = nativeCurrency

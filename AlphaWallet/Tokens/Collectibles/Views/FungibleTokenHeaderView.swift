@@ -13,6 +13,8 @@ class FungibleTokenHeaderView: UIView {
         let imageView = TokenImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.isUserInteractionEnabled = true
+        imageView.contentMode = .scaleAspectFit
+
         return imageView
     }()
 
@@ -74,7 +76,7 @@ class FungibleTokenHeaderView: UIView {
     private func bind(viewModel: FungibleTokenHeaderViewModel) {
         backgroundColor = viewModel.backgroundColor
 
-        tokenIconImageView.subscribable = viewModel.iconImage
+        tokenIconImageView.set(imageSource: viewModel.iconImage)
         blockChainTagLabel.configure(viewModel: viewModel.blockChainTagViewModel)
 
         let input = FungibleTokenHeaderViewModelInput(toggleValue: toggleValue.eraseToAnyPublisher())

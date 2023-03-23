@@ -284,7 +284,7 @@ private class _TextField: UITextField {
 }
 
 extension TextField {
-    static var textField: TextField {
+    static func buildTextField() -> TextField {
         let textField = TextField(edgeInsets: DataEntry.Metric.TextField.Default.edgeInsets)
         textField.cornerRadius = DataEntry.Metric.TextField.Default.cornerRadius
         textField.textInset = DataEntry.Metric.TextField.Default.textInset
@@ -296,8 +296,8 @@ extension TextField {
         return textField
     }
 
-    static func textField(keyboardType: UIKeyboardType, placeHolder: String, label: String) -> TextField {
-        let textField = TextField.textField
+    static func buildTextField(keyboardType: UIKeyboardType, placeHolder: String, label: String) -> TextField {
+        let textField = TextField.buildTextField()
         textField.keyboardType = keyboardType
         textField.placeholder = placeHolder
         textField.label.text = label
@@ -305,7 +305,7 @@ extension TextField {
         return textField
     }
 
-    static var roundedTextField: TextField {
+    static func buildRoundedTextField() -> TextField {
         let textField = TextField(edgeInsets: DataEntry.Metric.TextField.Rounded.edgeInsets)
         textField.heightConstraint.constant = DataEntry.Metric.TextField.Rounded.height
         textField.cornerRadius = DataEntry.Metric.TextField.Rounded.cornerRadius
@@ -314,8 +314,8 @@ extension TextField {
         return textField
     }
 
-    static var password: TextField {
-        let textField: TextField = .textField
+    static func buildPasswordTextField() -> TextField {
+        let textField: TextField = .buildTextField()
         textField.textField.autocorrectionType = .no
         textField.textField.autocapitalizationType = .none
         textField.returnKeyType = .done
@@ -325,7 +325,7 @@ extension TextField {
             let button = UIButton(type: .system)
             button.frame = .init(x: 0, y: 0, width: 30, height: 30)
             button.setImage(R.image.togglePassword(), for: .normal)
-            button.tintColor = .init(red: 111, green: 111, blue: 111)
+            button.tintColor = Configuration.Color.Semantic.textFieldPasswordTint
             button.addTarget(textField, action: #selector(toggleMaskPassword), for: .touchUpInside)
             return button
         }()
@@ -343,7 +343,7 @@ fileprivate extension TextField {
         if isSecureTextEntry {
             sender.tintColor = Configuration.Color.Semantic.secureIcon
         } else {
-            sender.tintColor = .init(red: 111, green: 111, blue: 111)
+            sender.tintColor = Configuration.Color.Semantic.textFieldPasswordTint
         }
     }
 }

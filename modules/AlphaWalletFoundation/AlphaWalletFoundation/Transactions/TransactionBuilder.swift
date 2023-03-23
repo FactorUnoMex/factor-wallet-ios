@@ -9,7 +9,7 @@ import Foundation
 import BigInt
 import Combine
 
-final class TransactionBuilder {
+public final class TransactionBuilder {
     private typealias LocalizedOperation = (name: String, symbol: String, decimals: Int, tokenType: TokenType)
 
     private let tokenProvidable: TokenProvidable
@@ -17,16 +17,16 @@ final class TransactionBuilder {
 
     let server: RPCServer
 
-    init(tokensService: TokenProvidable,
-         server: RPCServer,
-         tokenProvider: TokenProviderType) {
+    public init(tokensService: TokenProvidable,
+                server: RPCServer,
+                tokenProvider: TokenProviderType) {
 
         self.ercProvider = tokenProvider
         self.tokenProvidable = tokensService
         self.server = server
     }
 
-    func buildTransaction(from transaction: RawTransaction) -> AnyPublisher<TransactionInstance?, Never> {
+    func buildTransaction(from transaction: NormalTransaction) -> AnyPublisher<TransactionInstance?, Never> {
         guard let from = AlphaWallet.Address(string: transaction.from) else {
             return .just(nil)
         }
@@ -90,7 +90,7 @@ final class TransactionBuilder {
             }.eraseToAnyPublisher()
     }
 
-    private func buildOperationForTokenTransfer(for transaction: RawTransaction) -> AnyPublisher<[LocalizedOperationObjectInstance], Never> {
+    private func buildOperationForTokenTransfer(for transaction: NormalTransaction) -> AnyPublisher<[LocalizedOperationObjectInstance], Never> {
         guard let contract = transaction.toAddress else {
             return .just([])
         }

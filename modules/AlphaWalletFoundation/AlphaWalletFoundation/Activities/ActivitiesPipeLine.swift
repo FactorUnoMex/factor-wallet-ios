@@ -21,13 +21,12 @@ public final class ActivitiesPipeLine: ActivitiesServiceType {
         return EventSourceForActivities(wallet: wallet, config: config, tokensService: tokensService, assetDefinitionStore: assetDefinitionStore, eventsDataStore: eventsActivityDataStore, sessionsProvider: sessionsProvider)
     }()
     private let tokensService: TokenProvidable
-
     private lazy var eventSource: EventSource = {
         EventSource(wallet: wallet, tokensService: tokensService, assetDefinitionStore: assetDefinitionStore, eventsDataStore: eventsDataStore, config: config, sessionsProvider: sessionsProvider)
     }()
 
     private lazy var activitiesSubService: ActivitiesServiceType = {
-        return ActivitiesService(config: config, sessions: sessionsProvider.activeSessions, assetDefinitionStore: assetDefinitionStore, eventsActivityDataStore: eventsActivityDataStore, eventsDataStore: eventsDataStore, transactionDataStore: transactionDataStore, tokensService: tokensService)
+        return ActivitiesService(sessionsProvider: sessionsProvider, assetDefinitionStore: assetDefinitionStore, eventsActivityDataStore: eventsActivityDataStore, eventsDataStore: eventsDataStore, transactionDataStore: transactionDataStore, tokensService: tokensService)
     }()
 
     public var activitiesPublisher: AnyPublisher<[ActivityCollection.MappedToDateActivityOrTransaction], Never> {
@@ -38,7 +37,15 @@ public final class ActivitiesPipeLine: ActivitiesServiceType {
         activitiesSubService.didUpdateActivityPublisher
     }
 
-    public init(config: Config, wallet: Wallet, assetDefinitionStore: AssetDefinitionStore, transactionDataStore: TransactionDataStore, tokensService: TokenProvidable, sessionsProvider: SessionsProvider, eventsActivityDataStore: EventsActivityDataStoreProtocol, eventsDataStore: NonActivityEventsDataStore) {
+    public init(config: Config,
+                wallet: Wallet,
+                assetDefinitionStore: AssetDefinitionStore,
+                transactionDataStore: TransactionDataStore,
+                tokensService: TokenProvidable,
+                sessionsProvider: SessionsProvider,
+                eventsActivityDataStore: EventsActivityDataStoreProtocol,
+                eventsDataStore: NonActivityEventsDataStore) {
+
         self.eventsActivityDataStore = eventsActivityDataStore
         self.eventsDataStore = eventsDataStore
         self.tokensService = tokensService
@@ -55,6 +62,12 @@ public final class ActivitiesPipeLine: ActivitiesServiceType {
         eventSourceForActivities?.start()
 
         activitiesSubService.start()
+    }
+
+    public func stop() {
+        activitiesSubService.stop()
+        eventSource.stop()
+        eventSourceForActivities?.stop()
     }
 
     public func reinject(activity: Activity) {

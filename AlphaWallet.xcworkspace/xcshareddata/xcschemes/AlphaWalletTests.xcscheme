@@ -83,7 +83,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2912CCF41F6A830700C6CBE3"
             BuildableName = "FactorWallet.app"
-            BlueprintName = "FactorWallet"
+            BlueprintName = "AlphaWallet"
             ReferencedContainer = "container:AlphaWallet.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

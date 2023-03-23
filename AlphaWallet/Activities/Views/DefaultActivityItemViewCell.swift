@@ -4,7 +4,13 @@ import UIKit
 
 class DefaultActivityItemViewCell: UITableViewCell {
     private let background = UIView()
-    private let tokenImageView = TokenImageView()
+    private let tokenImageView: TokenImageView = {
+        let imageView = TokenImageView()
+        imageView.loading = .disabled
+        imageView.contentMode = .scaleAspectFit
+        
+        return imageView
+    }()
     private let stateView: ActivityStateView = {
         let view = ActivityStateView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -24,8 +30,6 @@ class DefaultActivityItemViewCell: UITableViewCell {
 
         contentView.addSubview(background)
         background.translatesAutoresizingMaskIntoConstraints = false
-
-        tokenImageView.contentMode = .scaleAspectFit
 
         subTitleLabel.lineBreakMode = .byTruncatingMiddle
 
@@ -101,7 +105,7 @@ class DefaultActivityItemViewCell: UITableViewCell {
 
         amountLabel.attributedText = viewModel.amount
 
-        tokenImageView.subscribable = viewModel.iconImage
+        tokenImageView.set(imageSource: viewModel.iconImage)
 
         stateView.configure(viewModel: viewModel.activityStateViewViewModel)
     }

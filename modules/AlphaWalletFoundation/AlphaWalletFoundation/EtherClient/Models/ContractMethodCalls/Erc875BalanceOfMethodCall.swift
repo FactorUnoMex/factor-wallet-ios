@@ -7,7 +7,7 @@
 
 import Foundation
 
-class Erc875BalanceOfMethodCall: ContractMethodCall {
+struct Erc875BalanceOfMethodCall: ContractMethodCall {
     typealias Response = [String]
 
     private let function = GetERC875Balance()
@@ -23,11 +23,8 @@ class Erc875BalanceOfMethodCall: ContractMethodCall {
         self.contract = contract
     }
 
-    func response(from resultObject: Any) throws -> [String] {
-        guard let dictionary = resultObject as? [String: AnyObject] else {
-            throw CastError(actualValue: resultObject, expectedType: [String: AnyObject].self)
-        }
-        return Erc875BalanceOfMethodCall.adapt(dictionary)
+    func response(from dictionary: [String: Any]) throws -> [String] {
+        return Erc875BalanceOfMethodCall.adapt(dictionary["0"])
     }
 
     private static func adapt(_ values: Any?) -> [String] {

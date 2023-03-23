@@ -7,7 +7,7 @@
 
 import Foundation
 
-class AnyContractMethodCall: ContractMethodCall {
+struct AnyContractMethodCall: ContractMethodCall {
     typealias Response = [String: Any]
 
     let contract: AlphaWallet.Address
@@ -22,11 +22,7 @@ class AnyContractMethodCall: ContractMethodCall {
         self.parameters = parameters
     }
 
-    func response(from resultObject: Any) throws -> [String: Any] {
-        guard let dictionary = resultObject as? [String: Any] else {
-            throw CastError(actualValue: resultObject, expectedType: [String: AnyObject].self)
-        }
-
+    func response(from dictionary: [String: Any]) throws -> [String: Any] {
         return dictionary
     }
 }

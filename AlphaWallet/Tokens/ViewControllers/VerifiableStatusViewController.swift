@@ -107,7 +107,7 @@ func createTokenScriptFileStatusButton(withStatus status: TokenLevelTokenScriptD
         switch reason {
         case .some(.oldTokenScriptVersion):
             //TODO have to reload from repo. But we don't have access to an AssetDefinitionStore for now
-//            button.handler = { urlOpener in urlOpener.open(url: URL(string: "https://factor-wallet.net")!) }
+//            button.handler = { urlOpener in urlOpener.open(url: URL(string: "https://alphawallet.com")!) }
             break
         case .some(.invalidSignature):
             break

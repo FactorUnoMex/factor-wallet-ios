@@ -38,7 +38,7 @@ class BuyCryptoUsingThirdPartyCoordinator: Coordinator {
 
             delegate?.didPressOpenWebPage(url, in: viewController)
         } else {
-            let fallbackUrl = URL(string: "https://factor-wallet.net/browser-item-category/utilities/")!
+            let fallbackUrl = URL(string: "https://alphawallet.com/browser-item-category/utilities/")!
             delegate?.didPressOpenWebPage(fallbackUrl, in: viewController)
         }
     }

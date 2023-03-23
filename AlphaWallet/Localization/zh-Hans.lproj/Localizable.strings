@@ -140,6 +140,7 @@
 "wallet.types.hdWallets" = "您的钱包";
 "wallet.types.keystoreWallets" = "密钥库钱包";
 "wallet.types.watchedWallets" = "只能查看的钱包";
+"wallet.types.hardwareWallets" = "Hardware Wallets";
 "wallet.create.button.title" = "创建钱包";
 "wallet.watch.button.title" = "查看钱包";
 "wallet.create.inProgress" = "正在创建钱包...";
@@ -459,6 +460,10 @@
 "dappBrowser.myDapps.edit.title.label" = "标题";
 "dappBrowser.myDapps.edit.url.label" = "签署人地址";
 "dappBrowser.clearMyDapps" = "是否移除书签？";
+"signMessage.validation.emptyMessage" = "Message to sign MUST be non empty";
+"signMessage.validation.dappBrowser.requestedChainUnavailable" = "You were requested to sign a message for the %@ chain. You are currently on the %@ chain";
+"signMessage.validation.walletConnect.v1.requestedChainUnavailable" = "You were requested to sign a message for the %@ chain. You are currently on the %@ chai";
+"signMessage.validation.walletConnect.v2.requestedChainUnavailable" = "You were requested to sign a message for the %@ chain. Make sure the %@ chain is enabled";
 "recent.transactions" = "最近交易";
 "blockchain.XDAI" = "xDAI 链";
 "blockchain.ARTIS.sigma1" = "ARTIS sigma1 网络";
@@ -876,3 +881,10 @@
 "accept.walletConnect.field.methods.title" = "Methods";
 "tokenscript.overrides.empty" = "There are no TokenScript overrides";
 "currency.navigationTitle" = "Change Fiat Currency";
+"hardwareWallet.failedToSign" = "Failed to sign message: %@";
+"hardwareWallet.failedToImportSeed" = "Failed to import seed: %@";
+"hardwareWallet.failedToWipe" = "Failed to wipe: %@";
+"hardwareWallet.failedToGetPublicKey" = "Failed to get public key: %@";
+"hardwareWallet.signatureObtained" = "Signature obtained";
+"hardwareWallet.publicKeyObtained" = "Public key obtained";
+"hardwareWallet.importedSeed" = "Imported seed";

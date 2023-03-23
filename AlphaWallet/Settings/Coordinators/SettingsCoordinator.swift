@@ -24,7 +24,7 @@ class SettingsCoordinator: Coordinator {
     private let keystore: Keystore
     private var config: Config
     private let sessionsProvider: SessionsProvider
-    private let restartQueue: RestartTaskQueue
+    private let restartHandler: RestartQueueHandler
     private let promptBackupCoordinator: PromptBackupCoordinator
     private let analytics: AnalyticsLogger
     private let walletConnectCoordinator: WalletConnectCoordinator
@@ -40,6 +40,7 @@ class SettingsCoordinator: Coordinator {
     private let tokenScriptOverridesFileManager: TokenScriptOverridesFileManager
     private let networkService: NetworkService
     private let promptBackup: PromptBackup
+    private let serversProvider: ServersProvidable
 
     let navigationController: UINavigationController
     weak var delegate: SettingsCoordinatorDelegate?
@@ -65,7 +66,7 @@ class SettingsCoordinator: Coordinator {
          keystore: Keystore,
          config: Config,
          sessionsProvider: SessionsProvider,
-         restartQueue: RestartTaskQueue,
+         restartHandler: RestartQueueHandler,
          promptBackupCoordinator: PromptBackupCoordinator,
          analytics: AnalyticsLogger,
          walletConnectCoordinator: WalletConnectCoordinator,
@@ -77,8 +78,10 @@ class SettingsCoordinator: Coordinator {
          currencyService: CurrencyService,
          tokenScriptOverridesFileManager: TokenScriptOverridesFileManager,
          networkService: NetworkService,
-         promptBackup: PromptBackup) {
+         promptBackup: PromptBackup,
+         serversProvider: ServersProvidable) {
 
+        self.serversProvider = serversProvider
         self.promptBackup = promptBackup
         self.networkService = networkService
         self.tokenScriptOverridesFileManager = tokenScriptOverridesFileManager
@@ -87,7 +90,7 @@ class SettingsCoordinator: Coordinator {
         self.keystore = keystore
         self.config = config
         self.sessionsProvider = sessionsProvider
-        self.restartQueue = restartQueue
+        self.restartHandler = restartHandler
         self.promptBackupCoordinator = promptBackupCoordinator
         self.analytics = analytics
         self.walletConnectCoordinator = walletConnectCoordinator
@@ -213,10 +216,11 @@ extension SettingsCoordinator: SettingsViewControllerDelegate {
         let coordinator = EnabledServersCoordinator(
             navigationController: navigationController,
             selectedServers: config.enabledServers,
-            restartQueue: restartQueue,
+            restartHandler: restartHandler,
             analytics: analytics,
             config: config,
-            networkService: networkService)
+            networkService: networkService,
+            serversProvider: serversProvider)
 
         coordinator.delegate = self
         coordinator.start()

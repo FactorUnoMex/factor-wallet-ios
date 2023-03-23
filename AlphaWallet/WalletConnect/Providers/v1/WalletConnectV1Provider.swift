@@ -8,7 +8,6 @@
 import Foundation
 import WalletConnectSwift
 import AlphaWalletAddress
-import PromiseKit
 import Combine
 import AlphaWalletFoundation
 import AlphaWalletLogger
@@ -73,7 +72,7 @@ class WalletConnectV1Provider: WalletConnectServer {
                         storage.value[index] = .init(session: session, namespaces: data.namespaces)
 
                         try client.updateSession(session, with: session.walletInfo!)
-                    } else if let account = accounts.first, let server = eip155URLCoder.decodeRPC(from: account.blockchain.absoluteString) {
+                    } else if let account = accounts.first, let server = Eip155UrlCoder.decodeRpc(from: account.blockchain.absoluteString) {
                         let data = try caip10AccountProvidable.namespaces(for: server)
                         let session = each.session.updatingWalletInfo(with: data.accounts, chainId: data.server.chainID)
 
@@ -151,16 +150,16 @@ extension WalletConnectV1Provider: WalletConnectV1ClientDelegate {
         guard let session = storage.value.first(where: { $0.topicOrUrl == .url(url: .init(url: request.url)) }) else {
             return client.send(.reject(request))
         }
-
-        decoder.decode(request: request, session: session)
-            .map { AlphaWallet.WalletConnect.Action(type: $0) }
-            .done { action in
-                self.delegate?.server(self, action: action, request: .v1(request: request, server: session.server), session: .init(session: session))
-            }.catch { error in
-                self.delegate?.server(self, didFail: error)
-                //NOTE: we need to reject request if there is some arrays
-                self.client.send(.reject(request))
-            }
+        do {
+            let action = AlphaWallet.WalletConnect.Action(type: try decoder.decode(request: request, session: session))
+            delegate?.server(self, action: action, request: .v1(request: request, server: session.server), session: .init(session: session))
+        } catch let error as JsonRpcError {
+            delegate?.server(self, didFail: error)
+            //NOTE: we need to reject request if there is some arrays
+            client.send(.reject(request))
+        } catch {
+            //no-op
+        }
     }
 
     private func removeSession(for url: WalletConnectV1URL) {
@@ -182,29 +181,30 @@ extension WalletConnectV1Provider: WalletConnectV1ClientDelegate {
         if let delegate = self.delegate {
             let sessionProposal = AlphaWallet.WalletConnect.Proposal(dAppInfo: session.dAppInfo)
 
-            delegate.server(self, shouldConnectFor: sessionProposal) { [weak self, caip10AccountProvidable] choice in
-                guard let strongSelf = self else { return }
+            delegate.server(self, shouldConnectFor: sessionProposal)
+                .sink { [weak self, caip10AccountProvidable] response in
+                    guard let strongSelf = self else { return }
 
-                guard let server = choice.server else {
-                    completion(nil)
-                    return
-                }
+                    guard let server = response.server else {
+                        completion(nil)
+                        return
+                    }
 
-                guard let data = try? caip10AccountProvidable.namespaces(for: server) else {
-                    completion(nil)
-                    return
-                }
+                    guard let data = try? caip10AccountProvidable.namespaces(for: server) else {
+                        completion(nil)
+                        return
+                    }
 
-                let session = session.updatingWalletInfo(with: data.accounts, chainId: data.server.chainID)
+                    let session = session.updatingWalletInfo(with: data.accounts, chainId: data.server.chainID)
 
-                if let index = strongSelf.storage.value.firstIndex(where: { $0.topicOrUrl == session.topicOrUrl }) {
-                    strongSelf.storage.value[index] = .init(session: session, namespaces: data.namespaces)
-                } else {
-                    strongSelf.storage.value.append(.init(session: session, namespaces: data.namespaces))
-                }
+                    if let index = strongSelf.storage.value.firstIndex(where: { $0.topicOrUrl == session.topicOrUrl }) {
+                        strongSelf.storage.value[index] = .init(session: session, namespaces: data.namespaces)
+                    } else {
+                        strongSelf.storage.value.append(.init(session: session, namespaces: data.namespaces))
+                    }
 
-                completion(session.walletInfo!)
-            }
+                    completion(session.walletInfo!)
+                }.store(in: &cancelable)
         } else {
             completion(nil)
         }
@@ -247,8 +247,8 @@ extension WalletConnectV1Provider: WalletConnectV1ClientDelegate {
 }
 
 fileprivate extension WalletConnectRequestDecoder {
-    func decode(request: WalletConnectV1Request, session: WalletConnectV1Session) -> Promise<AlphaWallet.WalletConnect.Action.ActionType> {
-        return decode(request: .v1(request: request, server: session.server))
+    func decode(request: WalletConnectV1Request, session: WalletConnectV1Session) throws -> AlphaWallet.WalletConnect.Action.ActionType {
+        return try decode(request: .v1(request: request, server: session.server))
     }
 }
 

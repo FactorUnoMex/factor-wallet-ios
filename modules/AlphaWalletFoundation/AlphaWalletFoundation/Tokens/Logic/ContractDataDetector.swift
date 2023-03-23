@@ -8,11 +8,12 @@ import Combine
 public enum ContractData {
     case name(String)
     case symbol(String)
-    case balance(nonFungible: NonFungibleBalance?, fungible: BigInt?, tokenType: TokenType)
+    case balance(nonFungible: NonFungibleBalance?, fungible: BigUInt?, tokenType: TokenType)
     case decimals(Int)
     case nonFungibleTokenComplete(name: String, symbol: String, balance: NonFungibleBalance, tokenType: TokenType)
-    case fungibleTokenComplete(name: String, symbol: String, decimals: Int, value: BigInt, tokenType: TokenType)
+    case fungibleTokenComplete(name: String, symbol: String, decimals: Int, value: BigUInt, tokenType: TokenType)
     case delegateTokenComplete
+    //TODO: remove failure case and return error instead
     case failed(networkReachable: Bool, error: Error)
 }
 
@@ -33,37 +34,48 @@ enum ContractDataDetectorError: Error {
 }
 
 public class ContractDataDetector {
-    private let address: AlphaWallet.Address
-    private let tokenProvider: TokenProviderType
+    private let contract: AlphaWallet.Address
+    private let ercTokenProvider: TokenProviderType
     private let assetDefinitionStore: AssetDefinitionStore
     private let namePromise: Promise<String>
     private let symbolPromise: Promise<String>
     private let tokenTypePromise: Promise<TokenType>
     private let (nonFungibleBalancePromise, nonFungibleBalanceSeal) = Promise<NonFungibleBalance>.pending()
-    private let (fungibleBalancePromise, fungibleBalanceSeal) = Promise<BigInt>.pending()
+    private let (fungibleBalancePromise, fungibleBalanceSeal) = Promise<BigUInt>.pending()
     private let (decimalsPromise, decimalsSeal) = Promise<Int>.pending()
     private var failed = false
-    private var completion: ((ContractData) -> Void)?
     private let reachability: ReachabilityManagerProtocol
     private let wallet: AlphaWallet.Address
+    private let subject = PassthroughSubject<ContractData, Never>()
 
-    public init(address: AlphaWallet.Address, session: WalletSession, assetDefinitionStore: AssetDefinitionStore, analytics: AnalyticsLogger, reachability: ReachabilityManagerProtocol) {
+    private var getErc875TokenBalanceCancellable: AnyCancellable?
+    private var getErc721BalanceCancellable: AnyCancellable?
+    private var getErc721ForTicketsBalanceCancellable: AnyCancellable?
+    private var getErc20BalanceCancellable: AnyCancellable?
+    private var getDecimalsCancellable: AnyCancellable?
+
+    public init(contract: AlphaWallet.Address,
+                wallet: AlphaWallet.Address,
+                ercTokenProvider: TokenProviderType,
+                assetDefinitionStore: AssetDefinitionStore,
+                analytics: AnalyticsLogger,
+                reachability: ReachabilityManagerProtocol) {
+
         self.reachability = reachability
-        self.address = address
-        self.wallet = session.account.address
-        self.tokenProvider = session.tokenProvider
+        self.contract = contract
+        self.wallet = wallet
+        self.ercTokenProvider = ercTokenProvider
         self.assetDefinitionStore = assetDefinitionStore
-        namePromise = tokenProvider.getContractName(for: address).promise()
-        symbolPromise = tokenProvider.getContractSymbol(for: address).promise()
-        tokenTypePromise = tokenProvider.getTokenType(for: address).promise()
+        namePromise = ercTokenProvider.getContractName(for: contract).promise()
+        symbolPromise = ercTokenProvider.getContractSymbol(for: contract).promise()
+        tokenTypePromise = ercTokenProvider.getTokenType(for: contract).promise()
     }
 
     //Failure to obtain contract data may be due to no-connectivity. So we should check .failed(networkReachable: Bool)
     //Have to use strong self in promises below, otherwise `self` will be destroyed before fetching completes
-    public func fetch(completion: @escaping (ContractData) -> Void) {
-        self.completion = completion
+    public func fetch() -> AnyPublisher<ContractData, Never> {
 
-        assetDefinitionStore.fetchXML(forContract: address, server: nil)
+        assetDefinitionStore.fetchXML(forContract: contract, server: nil)
 
         firstly {
             tokenTypePromise
@@ -74,13 +86,15 @@ public class ContractDataDetector {
         }.catch { error in
             self.callCompletionFailed(error: ContractDataDetectorError.promise(error: error, .tokenType))
         }
+
+        return subject.eraseToAnyPublisher()
     }
 
     private func processTokenType(_ tokenType: TokenType) {
         switch tokenType {
         case .erc875:
-            tokenProvider.getErc875TokenBalance(for: wallet, contract: address)
-                .sinkAsync(receiveCompletion: { result in
+            getErc875TokenBalanceCancellable = ercTokenProvider.getErc875TokenBalance(for: wallet, contract: contract)
+                .sink(receiveCompletion: { result in
                     guard case .failure(let error) = result else { return }
 
                     self.nonFungibleBalanceSeal.reject(error)
@@ -91,8 +105,8 @@ public class ContractDataDetector {
                     self.completionOfPartialData(.balance(nonFungible: .erc875(balance), fungible: nil, tokenType: .erc875))
                 })
         case .erc721:
-            tokenProvider.getErc721Balance(for: address)
-                .sinkAsync(receiveCompletion: { result in
+            getErc721BalanceCancellable = ercTokenProvider.getErc721Balance(for: contract)
+                .sink(receiveCompletion: { result in
                     guard case .failure(let error) = result else { return }
 
                     self.nonFungibleBalanceSeal.reject(error)
@@ -105,8 +119,8 @@ public class ContractDataDetector {
                     self.completionOfPartialData(.balance(nonFungible: .balance(balance), fungible: nil, tokenType: .erc721))
                 })
         case .erc721ForTickets:
-            tokenProvider.getErc721ForTicketsBalance(for: address)
-                .sinkAsync(receiveCompletion: { result in
+            getErc721ForTicketsBalanceCancellable = ercTokenProvider.getErc721ForTicketsBalance(for: contract)
+                .sink(receiveCompletion: { result in
                     guard case .failure(let error) = result else { return }
 
                     self.nonFungibleBalanceSeal.reject(error)
@@ -122,8 +136,8 @@ public class ContractDataDetector {
             self.decimalsSeal.fulfill(0)
             self.completionOfPartialData(.balance(nonFungible: .balance(balance), fungible: nil, tokenType: .erc1155))
         case .erc20:
-            tokenProvider.getErc20Balance(for: address)
-                .sinkAsync(receiveCompletion: { result in
+            getErc20BalanceCancellable = ercTokenProvider.getErc20Balance(for: contract)
+                .sink(receiveCompletion: { result in
                     guard case .failure(let error) = result else { return }
 
                     self.fungibleBalanceSeal.reject(error)
@@ -133,8 +147,8 @@ public class ContractDataDetector {
                     self.completionOfPartialData(.balance(nonFungible: nil, fungible: value, tokenType: .erc20))
                 })
 
-            tokenProvider.getDecimals(for: address)
-                .sinkAsync(receiveCompletion: { result in
+            getDecimalsCancellable = ercTokenProvider.getDecimals(for: contract)
+                .sink(receiveCompletion: { result in
                     guard case .failure(let error) = result else { return }
 
                     self.decimalsSeal.reject(error)
@@ -181,15 +195,15 @@ public class ContractDataDetector {
     }
 
     private func completionOfPartialData(_ data: ContractData) {
-        completion?(data)
+        subject.send(data)
         callCompletionOnAllData()
     }
 
     private func callCompletionFailed(error: ContractDataDetectorError) {
         guard !failed else { return }
         failed = true
-
-        completion?(.failed(networkReachable: reachability.isReachable, error: error))
+        subject.send(.failed(networkReachable: reachability.isReachable, error: error))
+        subject.send(completion: .finished)
     }
 
     private func callCompletionAsDelegateTokenOrNot(error: ContractDataDetectorError) {
@@ -197,7 +211,8 @@ public class ContractDataDetector {
         //Must check because we also get an empty symbol (and name) if there's no connectivity
         //TODO maybe better to share an instance of the reachability manager
         if reachability.isReachable {
-            completion?(.delegateTokenComplete)
+            subject.send(.delegateTokenComplete)
+            subject.send(completion: .finished)
         } else {
             callCompletionFailed(error: error)
         }
@@ -211,14 +226,16 @@ public class ContractDataDetector {
                 if let nonFungibleBalance = nonFungibleBalancePromise.value {
                     let name = namePromise.value
                     let symbol = symbolPromise.value
-                    completion?(.nonFungibleTokenComplete(name: name ?? "", symbol: symbol ?? "", balance: nonFungibleBalance, tokenType: tokenType))
+                    subject.send(.nonFungibleTokenComplete(name: name ?? "", symbol: symbol ?? "", balance: nonFungibleBalance, tokenType: tokenType))
+                    subject.send(completion: .finished)
                 }
             case .nativeCryptocurrency, .erc20:
                 if let name = namePromise.value, let symbol = symbolPromise.value, let decimals = decimalsPromise.value, let value = fungibleBalancePromise.value {
                     if symbol.isEmpty {
                         callCompletionAsDelegateTokenOrNot(error: ContractDataDetectorError.symbolIsEmpty)
                     } else {
-                        completion?(.fungibleTokenComplete(name: name, symbol: symbol, decimals: decimals, value: value, tokenType: tokenType))
+                        subject.send(.fungibleTokenComplete(name: name, symbol: symbol, decimals: decimals, value: value, tokenType: tokenType))
+                        subject.send(completion: .finished)
                     }
                 }
             }
@@ -226,7 +243,8 @@ public class ContractDataDetector {
             if symbol.isEmpty {
                 callCompletionAsDelegateTokenOrNot(error: ContractDataDetectorError.symbolIsEmpty)
             } else {
-                completion?(.fungibleTokenComplete(name: name, symbol: symbol, decimals: decimals, value: .zero, tokenType: .erc20))
+                subject.send(.fungibleTokenComplete(name: name, symbol: symbol, decimals: decimals, value: .zero, tokenType: .erc20))
+                subject.send(completion: .finished)
             }
         }
     }

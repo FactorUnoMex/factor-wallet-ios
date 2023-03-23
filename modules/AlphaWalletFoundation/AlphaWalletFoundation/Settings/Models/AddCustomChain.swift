@@ -45,11 +45,11 @@ public class AddCustomChain {
     private var cancelable: AnyCancellable?
     private var customChain: WalletAddEthereumChainObject
     private let isTestnet: Bool
-    private let restartQueue: RestartTaskQueue
+    private let restartHandler: RestartQueueHandler
     private let url: URL?
     private let operation: SaveOperationType
     private let chainNameFallback: String
-    private let network: AddCustomChainNetworking
+    private let networking: AddCustomChainNetworking
     private let analytics: AnalyticsLogger
     private let networkService: NetworkService
     private lazy var getChainId = GetChainId(analytics: analytics)
@@ -58,7 +58,7 @@ public class AddCustomChain {
 
     public init(_ customChain: WalletAddEthereumChainObject,
                 isTestnet: Bool,
-                restartQueue: RestartTaskQueue,
+                restartHandler: RestartQueueHandler,
                 url: URL?,
                 operation: SaveOperationType,
                 chainNameFallback: String,
@@ -66,10 +66,10 @@ public class AddCustomChain {
                 analytics: AnalyticsLogger) {
 
         self.networkService = networkService
-        self.network = AddCustomChainNetworking(networkService: networkService)
+        self.networking = AddCustomChainNetworking(networkService: networkService)
         self.customChain = customChain
         self.isTestnet = isTestnet
-        self.restartQueue = restartQueue
+        self.restartHandler = restartHandler
         self.url = url
         self.operation = operation
         self.chainNameFallback = chainNameFallback
@@ -88,9 +88,9 @@ public class AddCustomChain {
                         }
                         return self.requestToUseFailedExplorerHostname(customChain: customChain, chainId: chainId)
                     }
-            }.flatMap { [network] customChain, chainId, rpcUrl -> AnyPublisher<(chainId: Int, rpcUrl: String, explorerType: RPCServer.EtherscanCompatibleType), AddCustomChainError> in
+            }.flatMap { [networking] customChain, chainId, rpcUrl -> AnyPublisher<(chainId: Int, rpcUrl: String, explorerType: RPCServer.EtherscanCompatibleType), AddCustomChainError> in
                 self.customChain = customChain
-                return network.checkExplorerType(customChain)
+                return networking.checkExplorerType(customChain)
                     .map { (chainId: chainId, rpcUrl: rpcUrl, explorerType: $0) }
                     .eraseToAnyPublisher()
             }.flatMap { chainId, rpcUrl, explorerType in
@@ -148,14 +148,14 @@ public class AddCustomChain {
     }
 
     private func queueAddCustomChain(_ customChain: WalletAddEthereumChainObject, chainId: Int, rpcUrl: String, etherscanCompatibleType: RPCServer.EtherscanCompatibleType) -> AnyPublisher<Void, AddCustomChainError> {
-        AnyPublisher<Void, AddCustomChainError>.create { [url, isTestnet, restartQueue, chainNameFallback] seal in
+        AnyPublisher<Void, AddCustomChainError>.create { [url, isTestnet, restartHandler, chainNameFallback] seal in
             let customRpc = CustomRPC(customChain: customChain, chainId: chainId, rpcUrl: rpcUrl, etherscanCompatibleType: etherscanCompatibleType, isTestnet: isTestnet, chainNameFallback: chainNameFallback)
             let server = RPCServer.custom(customRpc)
-            restartQueue.add(.addServer(customRpc))
-            restartQueue.add(.enableServer(server))
-            restartQueue.add(.switchDappServer(server: server))
+            restartHandler.add(.addServer(customRpc))
+            restartHandler.add(.enableServer(server))
+            restartHandler.add(.switchDappServer(server: server))
             if let url = url {
-                restartQueue.add(.loadUrlInDappBrowser(url))
+                restartHandler.add(.loadUrlInDappBrowser(url))
             }
             seal.send(())
             seal.send(completion: .finished)
@@ -165,13 +165,13 @@ public class AddCustomChain {
     }
 
     private func queueEditCustomChain(_ customChain: WalletAddEthereumChainObject, chainId: Int, rpcUrl: String, etherscanCompatibleType: RPCServer.EtherscanCompatibleType, originalRpc: CustomRPC) -> AnyPublisher<Void, AddCustomChainError> {
-        AnyPublisher<Void, AddCustomChainError>.create { [url, isTestnet, restartQueue, chainNameFallback] seal in
+        AnyPublisher<Void, AddCustomChainError>.create { [url, isTestnet, restartHandler, chainNameFallback] seal in
             let newCustomRpc = CustomRPC(customChain: customChain, chainId: chainId, rpcUrl: rpcUrl, etherscanCompatibleType: etherscanCompatibleType, isTestnet: isTestnet, chainNameFallback: chainNameFallback)
             let server = RPCServer.custom(newCustomRpc)
-            restartQueue.add(.editServer(original: originalRpc, edited: newCustomRpc))
-            restartQueue.add(.switchDappServer(server: server))
+            restartHandler.add(.editServer(original: originalRpc, edited: newCustomRpc))
+            restartHandler.add(.switchDappServer(server: server))
             if let url = url {
-                restartQueue.add(.loadUrlInDappBrowser(url))
+                restartHandler.add(.loadUrlInDappBrowser(url))
             }
 
             seal.send(())
@@ -222,7 +222,7 @@ public class AddCustomChain {
             return .fail(AddCustomChainError.missingBlockchainExplorerUrl)
         }
 
-        return network
+        return networking
             .figureOutHostname(urlString)
             .map { newUrlString in
                 if urlString == newUrlString {

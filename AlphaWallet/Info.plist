@@ -23,7 +23,7 @@
 			<string>Default</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>net.factor-wallet.alphawallet.tsml</string>
+				<string>com.stormbird.alphawallet.tsml</string>
 			</array>
 		</dict>
 	</array>
@@ -165,7 +165,7 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIUserInterfaceStyle</key>
-	<string>Light</string>
+	<string>Automatic</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
@@ -176,7 +176,7 @@
 			<key>UTTypeDescription</key>
 			<string>TokenScript file</string>
 			<key>UTTypeIdentifier</key>
-			<string>net.factor-wallet.alphawallet.tsml</string>
+			<string>com.stormbird.alphawallet.tsml</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>

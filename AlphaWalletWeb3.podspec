@@ -18,7 +18,7 @@ DESC
 s.homepage     = "https://github.com/AlphaWallet/AlphaWalletWeb3"
 s.license      = { :type => "MIT", :file => "LICENSE" }
 s.author       = { "Vladyslav Shepitko" => "vladyslav.shepitko@gmail.com" }
-s.source       = { :git => 'git@github.com:FactorUnoMex/factor-wallet-ios.git', :tag => "#{s.version}" }
+s.source       = { :git => 'git@github.com:AlphaWallet/alpha-wallet-ios.git', :tag => "#{s.version}" }
 
 s.swift_version = '4.2'
 s.module_name = 'AlphaWalletWeb3'

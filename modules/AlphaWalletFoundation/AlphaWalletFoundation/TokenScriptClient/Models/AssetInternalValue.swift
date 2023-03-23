@@ -90,9 +90,6 @@ public enum AssetInternalValue: Codable {
         guard case .bytes(let value) = self else { return nil }
         return value
     }
-    public var isSubscribableValue: Bool {
-        return subscribableValue != nil
-    }
 
     enum Key: CodingKey {
         case address
@@ -172,7 +169,7 @@ extension Array where Element == Subscribable<AssetInternalValue> {
         return Promise { seal in
             var count = 0
             for each in self {
-                each.subscribeOnce { _ in
+                each.sinkFirst { _ in
                     count += 1
                     guard count == self.count else { return }
                     seal.fulfill(Void())

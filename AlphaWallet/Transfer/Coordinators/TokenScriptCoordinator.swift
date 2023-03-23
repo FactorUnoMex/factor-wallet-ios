@@ -9,6 +9,7 @@ import UIKit
 import BigInt
 import Combine
 import AlphaWalletFoundation
+import AlphaWalletCore
 
 protocol TokenScriptCoordinatorDelegate: CanOpenURL, SendTransactionDelegate, BuyCryptoDelegate {
     func didFinish(_ result: ConfirmResult, in coordinator: TokenScriptCoordinator)
@@ -119,6 +120,24 @@ class TokenScriptCoordinator: Coordinator {
 
 extension TokenScriptCoordinator: TokenInstanceActionViewControllerDelegate {
 
+    func requestSignMessage(message: SignMessageType,
+                            server: RPCServer,
+                            account: AlphaWallet.Address,
+                            source: Analytics.SignMessageRequestSource,
+                            requester: RequesterViewModel?) -> AnyPublisher<Data, PromiseError> {
+
+        return SignMessageCoordinator.promise(
+            analytics: analytics,
+            navigationController: navigationController,
+            keystore: keystore,
+            coordinator: self,
+            signType: message,
+            account: account,
+            source: source,
+            requester: requester)
+            .publisher(queue: .main)
+    }
+
     func didClose(in viewController: TokenInstanceActionViewController) {
         delegate?.didCancel(in: self)
     }
@@ -160,7 +179,7 @@ extension TokenScriptCoordinator: TransactionConfirmationCoordinatorDelegate {
     func coordinator(_ coordinator: TransactionConfirmationCoordinator, didFailTransaction error: Error) {
         UIApplication.shared
             .presentedViewController(or: navigationController)
-            .displayError(message: error.prettyError)
+            .displayError(message: error.localizedDescription)
     }
 
     func didClose(in coordinator: TransactionConfirmationCoordinator) {
@@ -231,7 +250,7 @@ extension TokenScriptCoordinator: ConfirmTokenScriptActionTransactionDelegate {
         } catch {
             UIApplication.shared
                 .presentedViewController(or: navigationController)
-                .displayError(message: error.prettyError)
+                .displayError(message: error.localizedDescription)
         }
     }
 }
