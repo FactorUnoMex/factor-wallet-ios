@@ -1,4 +1,4 @@
-# AlphaWallet - Advanced, Open Source Ethereum Mobile Wallet & dApp Browser for iOS
+# FactorWallet - Advanced, Open Source Ethereum Mobile Wallet & dApp Browser for iOS
 
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/FactorUnoMex/factor-wallet-ios/blob/master/LICENSE)
 
